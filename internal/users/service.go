@@ -1,0 +1,30 @@
+package users
+
+import (
+	"context"
+
+	repo "github.com/thisgleammm/mantis-backend/internal/adapters/postgresql/sqlc"
+)
+
+type Service interface {
+	ListUsers(ctx context.Context) ([]repo.ListUsersRow, error)
+	FindUserByID(ctx context.Context, id int64) (repo.FindUserByIDRow, error)
+}
+
+type svc struct {
+	repo repo.Querier
+}
+
+func NewService(repo repo.Querier) Service {
+	return &svc{
+		repo: repo,
+	}
+}
+
+func (s *svc) ListUsers(ctx context.Context) ([]repo.ListUsersRow, error) {
+	return s.repo.ListUsers(ctx)
+}
+
+func (s *svc) FindUserByID(ctx context.Context, id int64) (repo.FindUserByIDRow, error) {
+	return s.repo.FindUserByID(ctx, id)
+}

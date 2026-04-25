@@ -18,7 +18,7 @@ COPY --from=builder /app/main .
 # Copy goose binary
 COPY --from=builder /go/bin/goose /usr/local/bin/goose
 # Copy migrations
-COPY --from=builder /app/internal/adapters/postgresql/migrations ./migrations
+COPY --from=builder /app/internal/adapters/postgresql/migrations ./adapters/postgresql/migrations
 
 EXPOSE 8080
 CMD ["./main"]

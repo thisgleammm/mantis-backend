@@ -93,12 +93,12 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 // validationErrors are produced by request.validate() — safe to expose to client.
 // DB errors and bcrypt errors are not in this set.
 var validationMessages = map[string]struct{}{
-	"username is required":                {},
-	"name is required":                    {},
-	"valid email is required":             {},
+	"username is required":                   {},
+	"name is required":                       {},
+	"valid email is required":                {},
 	"password must be at least 8 characters": {},
-	"email is required":                   {},
-	"password is required":                {},
+	"email is required":                      {},
+	"password is required":                   {},
 }
 
 func isValidationError(err error) bool {

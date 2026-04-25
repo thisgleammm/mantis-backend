@@ -11,7 +11,7 @@ import (
 var jwtSecret []byte
 
 func init() {
-	// env.init() runs first because it's imported. 
+	// env.init() runs first because it's imported.
 	// It loads .env into the environment.
 	jwtSecret = []byte(env.RequiredString("JWT_SECRET"))
 }

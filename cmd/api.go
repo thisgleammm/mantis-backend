@@ -8,13 +8,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5"
-	"github.com/thisgleammm/mantis-backend/internal/auth"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
+	_ "github.com/thisgleammm/mantis-backend/cmd/docs"
 	repo "github.com/thisgleammm/mantis-backend/internal/adapters/postgresql/sqlc"
+	"github.com/thisgleammm/mantis-backend/internal/auth"
 	"github.com/thisgleammm/mantis-backend/internal/categories"
 	"github.com/thisgleammm/mantis-backend/internal/products"
 	"github.com/thisgleammm/mantis-backend/internal/users"
-	_ "github.com/thisgleammm/mantis-backend/cmd/docs"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 // mount
@@ -33,7 +33,7 @@ func (app *application) mount() http.Handler {
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("all good"))
 	})
-	
+
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:8080/swagger/doc.json"), //The url pointing to API definition
 	))
@@ -74,7 +74,6 @@ func (app *application) mount() http.Handler {
 			r.Post("/login", authHandler.Login)
 		})
 
-
 	})
 
 	return r
@@ -82,13 +81,13 @@ func (app *application) mount() http.Handler {
 }
 
 // run
-func (app *application) run(h http.Handler) error{
+func (app *application) run(h http.Handler) error {
 	srv := &http.Server{
-		Addr : app.Config.addr,
-		Handler : h,
-		WriteTimeout : 30 * time.Second,
-		ReadTimeout : 10 * time.Second,
-		IdleTimeout : time.Minute,
+		Addr:         app.Config.addr,
+		Handler:      h,
+		WriteTimeout: 30 * time.Second,
+		ReadTimeout:  10 * time.Second,
+		IdleTimeout:  time.Minute,
 	}
 
 	slog.Info("server has started", "addr", app.Config.addr)
@@ -104,7 +103,7 @@ type application struct {
 
 type config struct {
 	addr string
-	db dbConfig
+	db   dbConfig
 }
 
 type dbConfig struct {

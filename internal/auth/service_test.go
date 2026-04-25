@@ -167,7 +167,7 @@ func TestService_Login(t *testing.T) {
 
 type stubQuerier struct {
 	repo.Querier
-	createUserFn             func(ctx context.Context, arg repo.CreateUserParams) (repo.CreateUserRow, error)
+	createUserFn              func(ctx context.Context, arg repo.CreateUserParams) (repo.CreateUserRow, error)
 	findUserByEmailForLoginFn func(ctx context.Context, email string) (repo.FindUserByEmailForLoginRow, error)
 }
 

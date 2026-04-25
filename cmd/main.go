@@ -49,7 +49,7 @@ func main() {
 
 	api := &application{
 		Config: cfg,
-		db: conn,
+		db:     conn,
 	}
 
 	if err := api.run(api.mount()); err != nil {
@@ -57,5 +57,3 @@ func main() {
 		os.Exit(1)
 	}
 }
-
-

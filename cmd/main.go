@@ -27,8 +27,13 @@ import (
 func main() {
 	ctx := context.Background()
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	cfg := config{
-		addr: ":8080",
+		addr: ":" + port,
 		db: dbConfig{
 			dsn: env.GetString("GOOSE_DBSTRING", "host=localhost user=root password=password dbname=mantis port=5432 sslmode=disable"),
 		},

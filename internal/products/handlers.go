@@ -1,6 +1,7 @@
 package products
 
 import (
+	stdjson "encoding/json"
 	"log"
 	"net/http"
 	"strconv"
@@ -124,7 +125,7 @@ type createProductRequest struct {
 	BasePrice      float64 `json:"base_price"`
 	DiscountPrice  float64 `json:"discount_price"`
 	Weight         float64 `json:"weight"`
-	Specifications []byte  `json:"specifications"` // Assume client sends JSON string or raw bytes
+	Specifications any     `json:"specifications"` // Allow client to send JSON object
 }
 
 // CreateProduct godoc
@@ -165,8 +166,9 @@ func (h *handler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	_ = params.BasePrice.Scan(strconv.FormatFloat(req.BasePrice, 'f', -1, 64))
 	_ = params.DiscountPrice.Scan(strconv.FormatFloat(req.DiscountPrice, 'f', -1, 64))
 	_ = params.Weight.Scan(strconv.FormatFloat(req.Weight, 'f', -1, 64))
-	
-	params.Specifications = req.Specifications
+
+	specs, _ := stdjson.Marshal(req.Specifications)
+	params.Specifications = specs
 
 	product, err := h.service.CreateProduct(r.Context(), params)
 	if err != nil {

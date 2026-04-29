@@ -334,7 +334,7 @@
 	"variable": [
 		{
 			"key": "base_url",
-			"value": "https://mantis-backend.fly.dev/",
+			"value": "https://mantis-backend.fly.dev",
 			"type": "string"
 		},
 		{

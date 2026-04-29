@@ -76,10 +76,7 @@ definitions:
       slug:
         type: string
       specifications:
-        description: Assume client sends JSON string or raw bytes
-        items:
-          type: integer
-        type: array
+        description: Allow client to send JSON object
       weight:
         type: number
     type: object

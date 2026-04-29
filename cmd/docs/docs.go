@@ -566,11 +566,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "specifications": {
-                    "description": "Assume client sends JSON string or raw bytes",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                    "description": "Allow client to send JSON object"
                 },
                 "weight": {
                     "type": "number"

@@ -104,6 +104,34 @@
 			"name": "Products",
 			"item": [
 				{
+					"name": "Create Product",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"category_id\": 1,\n    \"name\": \"Sample Product\",\n    \"slug\": \"sample-product-slug\",\n    \"description\": \"A sample product description\",\n    \"base_price\": 150000,\n    \"discount_price\": 120000,\n    \"weight\": 250,\n    \"specifications\": {}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/products",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "List Products",
 					"request": {
 						"method": "GET",

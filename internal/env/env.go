@@ -8,8 +8,8 @@ import (
 )
 
 func init() {
-	// Load .env if it exists. Ignore error if it doesn't (production might use real env vars).
-	_ = godotenv.Load()
+	// Load .env if it exists. Check current and parent directory.
+	_ = godotenv.Load(".env", "../.env")
 }
 
 func GetString(key, fallback string) string {

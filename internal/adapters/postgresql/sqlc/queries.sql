@@ -58,3 +58,12 @@ ORDER BY created_at DESC;
 SELECT id, name, slug, description, icon_image_url, banner_image_url, is_active, created_at, updated_at
 FROM categories
 WHERE id = $1 AND is_active = true;
+
+-- name: CreateProduct :one
+INSERT INTO products (
+    category_id, name, slug, description, base_price, 
+    discount_price, weight, specifications
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8
+)
+RETURNING id, category_id, name, slug, description, base_price, discount_price, weight, specifications, rating_average, rating_count, created_at, updated_at;

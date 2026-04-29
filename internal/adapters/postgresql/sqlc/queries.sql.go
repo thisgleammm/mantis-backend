@@ -11,6 +11,73 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createProduct = `-- name: CreateProduct :one
+INSERT INTO products (
+    category_id, name, slug, description, base_price, 
+    discount_price, weight, specifications
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8
+)
+RETURNING id, category_id, name, slug, description, base_price, discount_price, weight, specifications, rating_average, rating_count, created_at, updated_at
+`
+
+type CreateProductParams struct {
+	CategoryID     pgtype.Int8    `json:"category_id"`
+	Name           string         `json:"name"`
+	Slug           string         `json:"slug"`
+	Description    pgtype.Text    `json:"description"`
+	BasePrice      pgtype.Numeric `json:"base_price"`
+	DiscountPrice  pgtype.Numeric `json:"discount_price"`
+	Weight         pgtype.Numeric `json:"weight"`
+	Specifications []byte         `json:"specifications"`
+}
+
+type CreateProductRow struct {
+	ID             int64              `json:"id"`
+	CategoryID     pgtype.Int8        `json:"category_id"`
+	Name           string             `json:"name"`
+	Slug           string             `json:"slug"`
+	Description    pgtype.Text        `json:"description"`
+	BasePrice      pgtype.Numeric     `json:"base_price"`
+	DiscountPrice  pgtype.Numeric     `json:"discount_price"`
+	Weight         pgtype.Numeric     `json:"weight"`
+	Specifications []byte             `json:"specifications"`
+	RatingAverage  pgtype.Numeric     `json:"rating_average"`
+	RatingCount    int32              `json:"rating_count"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (CreateProductRow, error) {
+	row := q.db.QueryRow(ctx, createProduct,
+		arg.CategoryID,
+		arg.Name,
+		arg.Slug,
+		arg.Description,
+		arg.BasePrice,
+		arg.DiscountPrice,
+		arg.Weight,
+		arg.Specifications,
+	)
+	var i CreateProductRow
+	err := row.Scan(
+		&i.ID,
+		&i.CategoryID,
+		&i.Name,
+		&i.Slug,
+		&i.Description,
+		&i.BasePrice,
+		&i.DiscountPrice,
+		&i.Weight,
+		&i.Specifications,
+		&i.RatingAverage,
+		&i.RatingCount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (username, name, email, password, phone_number)
 VALUES ($1, $2, $3, $4, $5)
@@ -197,14 +264,13 @@ func (q *Queries) FindUserByEmailForLogin(ctx context.Context, email string) (Fi
 
 const findUserByID = `-- name: FindUserByID :one
 SELECT 
-    id, username, name, email, phone_number, created_at
+    id, name, email, phone_number, created_at
 FROM users 
 WHERE id = $1 AND deleted_at IS NULL
 `
 
 type FindUserByIDRow struct {
 	ID          int64              `json:"id"`
-	Username    string             `json:"username"`
 	Name        string             `json:"name"`
 	Email       string             `json:"email"`
 	PhoneNumber pgtype.Text        `json:"phone_number"`
@@ -217,7 +283,6 @@ func (q *Queries) FindUserByID(ctx context.Context, id int64) (FindUserByIDRow, 
 	var i FindUserByIDRow
 	err := row.Scan(
 		&i.ID,
-		&i.Username,
 		&i.Name,
 		&i.Email,
 		&i.PhoneNumber,
@@ -317,14 +382,13 @@ func (q *Queries) ListProducts(ctx context.Context) ([]ListProductsRow, error) {
 
 const listUsers = `-- name: ListUsers :many
 SELECT 
-    id, username, name, email, phone_number, created_at
+    id, name, email, phone_number, created_at
 FROM users
 WHERE deleted_at IS NULL
 `
 
 type ListUsersRow struct {
 	ID          int64              `json:"id"`
-	Username    string             `json:"username"`
 	Name        string             `json:"name"`
 	Email       string             `json:"email"`
 	PhoneNumber pgtype.Text        `json:"phone_number"`
@@ -343,7 +407,6 @@ func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
 		var i ListUsersRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.Username,
 			&i.Name,
 			&i.Email,
 			&i.PhoneNumber,

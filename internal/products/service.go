@@ -10,6 +10,7 @@ type Service interface {
 	ListProducts(ctx context.Context) ([]repo.ListProductsRow, error)
 	FindProductByID(ctx context.Context, id int64) (repo.FindProductByIDRow, error)
 	FindProductBySlug(ctx context.Context, slug string) (repo.FindProductBySlugRow, error)
+	CreateProduct(ctx context.Context, params repo.CreateProductParams) (repo.CreateProductRow, error)
 }
 
 type svc struct {
@@ -33,4 +34,8 @@ func (s *svc) FindProductByID(ctx context.Context, id int64) (repo.FindProductBy
 
 func (s *svc) FindProductBySlug(ctx context.Context, slug string) (repo.FindProductBySlugRow, error) {
 	return s.repo.FindProductBySlug(ctx, slug)
+}
+
+func (s *svc) CreateProduct(ctx context.Context, params repo.CreateProductParams) (repo.CreateProductRow, error) {
+	return s.repo.CreateProduct(ctx, params)
 }

@@ -9,6 +9,7 @@ import (
 )
 
 type Querier interface {
+	CreateProduct(ctx context.Context, arg CreateProductParams) (CreateProductRow, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
 	FindCategoryByID(ctx context.Context, id int64) (Category, error)
 	// Untuk detail satu produk, baru kita tarik seluruh data beratnya.

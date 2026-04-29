@@ -45,7 +45,7 @@ func (app *application) mount() http.Handler {
 	})
 
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8080/swagger/doc.json"), //The url pointing to API definition
+		httpSwagger.URL("/swagger/doc.json"), //The url pointing to API definition
 	))
 
 	productService := products.NewService(repo.New(app.db))

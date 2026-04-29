@@ -15,7 +15,7 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:8080",
+    "host": "mantis-backend.fly.dev",
     "basePath": "/api/v1",
     "paths": {
         "/auth/login": {
@@ -195,6 +195,50 @@
                             "items": {
                                 "$ref": "#/definitions/products.productResponse"
                             }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new product with the provided details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Create a new product",
+                "parameters": [
+                    {
+                        "description": "Product details",
+                        "name": "product",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/products.createProductRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/products.productResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 }
@@ -491,6 +535,39 @@
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "products.createProductRequest": {
+            "type": "object",
+            "properties": {
+                "base_price": {
+                    "type": "number"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "discount_price": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "specifications": {
+                    "description": "Assume client sends JSON string or raw bytes",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "weight": {
+                    "type": "number"
                 }
             }
         },

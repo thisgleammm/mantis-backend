@@ -61,6 +61,28 @@ definitions:
       updated_at:
         type: string
     type: object
+  products.createProductRequest:
+    properties:
+      base_price:
+        type: number
+      category_id:
+        type: integer
+      description:
+        type: string
+      discount_price:
+        type: number
+      name:
+        type: string
+      slug:
+        type: string
+      specifications:
+        description: Assume client sends JSON string or raw bytes
+        items:
+          type: integer
+        type: array
+      weight:
+        type: number
+    type: object
   products.productResponse:
     properties:
       base_price:
@@ -103,7 +125,7 @@ definitions:
       username:
         type: string
     type: object
-host: localhost:8080
+host: mantis-backend.fly.dev
 info:
   contact:
     email: support@swagger.io
@@ -234,6 +256,35 @@ paths:
               $ref: '#/definitions/products.productResponse'
             type: array
       summary: List all products
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: Create a new product with the provided details
+      parameters:
+      - description: Product details
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/products.createProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/products.productResponse'
+        "400":
+          description: invalid request payload
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Create a new product
       tags:
       - products
   /products/{id}:

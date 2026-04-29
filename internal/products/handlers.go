@@ -36,6 +36,8 @@ type productResponse struct {
 	UpdatedAt     string  `json:"updated_at"`
 }
 
+var _ = productResponse{}
+
 // ListProducts godoc
 // @Summary List all products
 // @Description Get a list of all products

@@ -306,7 +306,7 @@
 	"variable": [
 		{
 			"key": "base_url",
-			"value": "http://localhost:8080",
+			"value": "https://mantis-backend.fly.dev/",
 			"type": "string"
 		},
 		{

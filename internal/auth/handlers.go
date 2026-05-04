@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
+	"github.com/thisgleammm/mantis-backend/internal/env"
 	mantisJson "github.com/thisgleammm/mantis-backend/internal/json"
 )
 
@@ -87,7 +89,37 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mantisJson.Write(w, http.StatusOK, map[string]string{"token": token})
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    token,
+		Expires:  time.Now().Add(72 * time.Hour),
+		HttpOnly: true,
+		Secure:   env.GetString("APP_ENV", "development") == "production",
+		Path:     "/",
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	mantisJson.Write(w, http.StatusOK, map[string]string{"message": "logged in successfully"})
+}
+
+// Logout godoc
+// @Summary Logout user
+// @Description Logout the current user (client-side should discard the token)
+// @Tags auth
+// @Produce  json
+// @Success 200 {string} string "successfully logged out"
+// @Router /auth/logout [post]
+func (h *handler) Logout(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    "",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   env.GetString("APP_ENV", "development") == "production",
+		Path:     "/",
+		SameSite: http.SameSiteLaxMode,
+	})
+	mantisJson.Write(w, http.StatusOK, map[string]string{"message": "successfully logged out"})
 }
 
 // validationErrors are produced by request.validate() — safe to expose to client.

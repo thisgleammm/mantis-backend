@@ -166,6 +166,19 @@ paths:
       summary: Login user
       tags:
       - auth
+  /auth/logout:
+    post:
+      description: Logout the current user (client-side should discard the token)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: successfully logged out
+          schema:
+            type: string
+      summary: Logout user
+      tags:
+      - auth
   /auth/register:
     post:
       consumes:

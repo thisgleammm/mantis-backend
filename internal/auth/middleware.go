@@ -17,20 +17,30 @@ func Middleware(next http.Handler) http.Handler {
 		slog.Debug("auth middleware", "method", r.Method, "path", r.URL.Path)
 
 		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			slog.Warn("auth middleware: missing Authorization header", "path", r.URL.Path)
-			http.Error(w, "missing authorization header", http.StatusUnauthorized)
+		var tokenString string
+
+		if authHeader != "" {
+			parts := strings.Split(authHeader, " ")
+			if len(parts) == 2 && parts[0] == "Bearer" {
+				tokenString = parts[1]
+			}
+		}
+
+		// Fallback to cookie if header is missing or invalid
+		if tokenString == "" {
+			cookie, err := r.Cookie("token")
+			if err == nil {
+				tokenString = cookie.Value
+			}
+		}
+
+		if tokenString == "" {
+			slog.Warn("auth middleware: missing token", "path", r.URL.Path)
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			slog.Warn("auth middleware: malformed Authorization header", "path", r.URL.Path)
-			http.Error(w, "invalid authorization header", http.StatusUnauthorized)
-			return
-		}
-
-		userID, err := VerifyToken(parts[1])
+		userID, err := VerifyToken(tokenString)
 		if err != nil {
 			// Log root cause — expired vs invalid vs tampered
 			slog.Warn("auth middleware: token verification failed", "path", r.URL.Path, "error", err)

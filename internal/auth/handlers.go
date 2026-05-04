@@ -4,10 +4,18 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
 	"time"
 
 	mantisJson "github.com/thisgleammm/mantis-backend/internal/json"
 )
+
+// isSecureCookie returns true in production (HTTPS required).
+// In development over plain HTTP, Secure=true causes browsers to silently
+// drop the cookie — so we disable it when APP_ENV != "production".
+func isSecureCookie() bool {
+	return os.Getenv("APP_ENV") == "production"
+}
 
 type handler struct {
 	service Service
@@ -88,14 +96,20 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	secure := isSecureCookie()
+	sameSite := http.SameSiteLaxMode
+	if secure {
+		sameSite = http.SameSiteNoneMode // SameSite=None requires Secure=true
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
 		Value:    token,
 		Expires:  time.Now().Add(72 * time.Hour),
 		HttpOnly: true,
-		Secure:   true, // Must be true for SameSite=None
+		Secure:   secure,
 		Path:     "/",
-		SameSite: http.SameSiteNoneMode,
+		SameSite: sameSite,
 	})
 
 	mantisJson.Write(w, http.StatusOK, map[string]string{"message": "logged in successfully"})
@@ -109,14 +123,20 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {string} string "successfully logged out"
 // @Router /auth/logout [post]
 func (h *handler) Logout(w http.ResponseWriter, r *http.Request) {
+	secure := isSecureCookie()
+	sameSite := http.SameSiteLaxMode
+	if secure {
+		sameSite = http.SameSiteNoneMode
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
 		Value:    "",
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   true, // Must be true for SameSite=None
+		Secure:   secure,
 		Path:     "/",
-		SameSite: http.SameSiteNoneMode,
+		SameSite: sameSite,
 	})
 	mantisJson.Write(w, http.StatusOK, map[string]string{"message": "successfully logged out"})
 }

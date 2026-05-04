@@ -157,10 +157,10 @@ func (h *handler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 			Valid:  req.Description != "",
 		},
 	}
-	
-	// Convert float64 to pgtype.Numeric (simple approach: using float64 to numeric logic is tricky, 
+
+	// Convert float64 to pgtype.Numeric (simple approach: using float64 to numeric logic is tricky,
 	// pgtype.Numeric requires setting Int/Exp, or we can scan from string)
-	// Actually, pgtype.Numeric has a Scan method or we can use Float8 instead of Numeric if possible. 
+	// Actually, pgtype.Numeric has a Scan method or we can use Float8 instead of Numeric if possible.
 	// But let's use pgtype.Numeric.Scan(fmt.Sprintf("%f", req.BasePrice))
 	// Wait, let's just use json mapping? No, we can set pgtype.Numeric by scanning string.
 	_ = params.BasePrice.Scan(strconv.FormatFloat(req.BasePrice, 'f', -1, 64))

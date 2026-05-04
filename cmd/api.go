@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/httprate"
 	"github.com/jackc/pgx/v5/pgxpool"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	_ "github.com/thisgleammm/mantis-backend/cmd/docs"
@@ -36,6 +37,7 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.RealIP)    // impor for rate limiting and analytics and tracing
 	r.Use(middleware.Logger)    // logging requests
 	r.Use(middleware.Recoverer) // recover from panics
+	r.Use(auth.SecurityHeaders) // security headers
 
 	r.Use(middleware.Timeout(60 * time.Second)) // timeout for requests
 
@@ -81,6 +83,7 @@ func (app *application) mount() http.Handler {
 		})
 
 		r.Route("/auth", func(r chi.Router) {
+			r.Use(httprate.LimitByIP(5, 1*time.Minute)) // rate limit auth attempts
 			r.Post("/register", authHandler.Register)
 			r.Post("/login", authHandler.Login)
 			r.Post("/logout", authHandler.Logout)

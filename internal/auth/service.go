@@ -34,8 +34,8 @@ type RegisterRequest struct {
 }
 
 func (r RegisterRequest) validate() error {
-	if strings.TrimSpace(r.Username) == "" {
-		return errors.New("username is required")
+	if len(strings.TrimSpace(r.Username)) < 3 {
+		return errors.New("username must be at least 3 characters")
 	}
 	if strings.TrimSpace(r.Name) == "" {
 		return errors.New("name is required")

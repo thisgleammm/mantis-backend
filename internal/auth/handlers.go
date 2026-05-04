@@ -94,9 +94,9 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 		Value:    token,
 		Expires:  time.Now().Add(72 * time.Hour),
 		HttpOnly: true,
-		Secure:   env.GetString("APP_ENV", "development") == "production",
+		Secure:   true, // Must be true for SameSite=None
 		Path:     "/",
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	mantisJson.Write(w, http.StatusOK, map[string]string{"message": "logged in successfully"})
@@ -115,9 +115,9 @@ func (h *handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Value:    "",
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   env.GetString("APP_ENV", "development") == "production",
+		Secure:   true, // Must be true for SameSite=None
 		Path:     "/",
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
 	})
 	mantisJson.Write(w, http.StatusOK, map[string]string{"message": "successfully logged out"})
 }
@@ -126,6 +126,7 @@ func (h *handler) Logout(w http.ResponseWriter, r *http.Request) {
 // DB errors and bcrypt errors are not in this set.
 var validationMessages = map[string]struct{}{
 	"username is required":                   {},
+	"username must be at least 3 characters": {},
 	"name is required":                       {},
 	"valid email is required":                {},
 	"password must be at least 8 characters": {},

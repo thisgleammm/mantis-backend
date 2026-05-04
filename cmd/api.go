@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	_ "github.com/thisgleammm/mantis-backend/cmd/docs"
 	repo "github.com/thisgleammm/mantis-backend/internal/adapters/postgresql/sqlc"
@@ -83,6 +83,7 @@ func (app *application) mount() http.Handler {
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/register", authHandler.Register)
 			r.Post("/login", authHandler.Login)
+			r.Post("/logout", authHandler.Logout)
 		})
 
 	})
@@ -109,7 +110,7 @@ func (app *application) run(h http.Handler) error {
 type application struct {
 	Config config
 	// logger
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
 type config struct {

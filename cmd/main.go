@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/thisgleammm/mantis-backend/internal/env"
 )
 
@@ -44,17 +44,17 @@ func main() {
 	slog.SetDefault(logger)
 
 	//database
-	conn, err := pgx.Connect(ctx, cfg.db.dsn)
+	dbPool, err := pgxpool.New(ctx, cfg.db.dsn)
 	if err != nil {
 		panic(err)
 	}
-	defer conn.Close(ctx)
+	defer dbPool.Close()
 
 	logger.Info("Connected to database", "dsn", cfg.db.dsn)
 
 	api := &application{
 		Config: cfg,
-		db:     conn,
+		db:     dbPool,
 	}
 
 	if err := api.run(api.mount()); err != nil {

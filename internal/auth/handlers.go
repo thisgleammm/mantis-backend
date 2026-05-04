@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/thisgleammm/mantis-backend/internal/env"
 	mantisJson "github.com/thisgleammm/mantis-backend/internal/json"
 )
 

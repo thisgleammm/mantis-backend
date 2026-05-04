@@ -25,7 +25,7 @@ func TestRegisterRequest_validate(t *testing.T) {
 		{
 			name:    "missing username",
 			req:     RegisterRequest{Name: "John", Email: "john@example.com", Password: "secret123"},
-			wantErr: "username is required",
+			wantErr: "username must be at least 3 characters",
 		},
 		{
 			name:    "missing name",

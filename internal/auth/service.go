@@ -101,7 +101,7 @@ func (s *svc) Login(ctx context.Context, req LoginRequest) (string, error) {
 	user, err := s.repo.FindUserByEmailForLogin(ctx, req.Email)
 	if err != nil {
 		slog.Warn("Login: user not found", "email", req.Email)
-		return "", errors.New("invalid email or password")
+		return "", errors.New("email tidak terdaftar")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))

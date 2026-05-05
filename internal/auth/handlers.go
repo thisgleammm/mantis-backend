@@ -76,10 +76,10 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 	token, err := h.service.Login(r.Context(), req)
 	if err != nil {
 		if isValidationError(err) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			mantisJson.Write(w, http.StatusBadRequest, map[string]string{"message": err.Error()})
 			return
 		}
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		mantisJson.Write(w, http.StatusUnauthorized, map[string]string{"message": err.Error()})
 		return
 	}
 

@@ -9,16 +9,16 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 RUN go build -o main ./cmd
+RUN go build -o migrate ./cmd/migrate
 
 # Final stage
 FROM alpine:latest
 WORKDIR /app
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /app/main .
-# Copy goose binary
-COPY --from=builder /go/bin/goose /usr/local/bin/goose
+COPY --from=builder /app/migrate .
 # Copy migrations
-COPY --from=builder /app/internal/adapters/postgresql/migrations ./adapters/postgresql/migrations
+COPY --from=builder /app/internal/adapters/postgresql/migrations ./internal/adapters/postgresql/migrations
 
 EXPOSE 8080
 CMD ["./main"]

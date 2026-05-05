@@ -20,9 +20,9 @@ jobs:
 
       - name: Create Neon branch for testing
         id: create-branch
-        uses: neondatabase/create-branch-action@v5
+        uses: neondatabase/create-branch-action@v6
         with:
-          project_id: orange-bird-ao0erzab
+          project_id: purple-night-05246624
           parent: main
           branch_name: migration-test-${{ github.run_id }}
           api_key: ${{ secrets.NEON_API_KEY }}
@@ -41,7 +41,7 @@ jobs:
         if: always()
         uses: neondatabase/delete-branch-action@v3
         with:
-          project_id: orange-bird-ao0erzab
+          project_id: purple-night-05246624
           branch: migration-test-${{ github.run_id }}
           api_key: ${{ secrets.NEON_API_KEY }}
 

@@ -2,7 +2,7 @@ app = "mantis-backend"
 primary_region = "sin"
 
 [deploy]
-  release_command = "goose -dir ./adapters/postgresql/migrations up"
+  release_command = "./migrate up"
 
 [env]
 PORT = "8080"

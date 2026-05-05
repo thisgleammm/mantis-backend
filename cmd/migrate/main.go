@@ -12,11 +12,20 @@ import (
 
 func main() {
 	dsn := env.RequiredString("GOOSE_DBSTRING")
+	
+	// Log connection attempt (safely)
+	log.Printf("Connecting to database...")
+	
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to open database: %v", err)
 	}
 	defer db.Close()
+
+	if err := db.Ping(); err != nil {
+		log.Fatalf("failed to ping database: %v", err)
+	}
+	log.Printf("Database connection successful")
 
 	arguments := []string{}
 	if len(os.Args) > 1 {

@@ -45,11 +45,25 @@ var _ = productResponse{}
 // @Tags products
 // @Accept  json
 // @Produce  json
+// @Param limit query int false "Limit" default(20)
+// @Param offset query int false "Offset" default(0)
 // @Success 200 {array} productResponse
 // @Router /products [get]
 func (h *handler) ListProducts(w http.ResponseWriter, r *http.Request) {
+	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
 
-	products, err := h.service.ListProducts(r.Context())
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 20
+	}
+
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		offset = 0
+	}
+
+	products, err := h.service.ListProducts(r.Context(), int32(limit), int32(offset))
 
 	if err != nil {
 		log.Println(err)

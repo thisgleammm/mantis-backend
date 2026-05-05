@@ -168,7 +168,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/products",
+							"raw": "{{base_url}}/api/v1/products?limit=20&offset=0",
 							"host": [
 								"{{base_url}}"
 							],
@@ -176,6 +176,16 @@
 								"api",
 								"v1",
 								"products"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "20"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
 							]
 						}
 					},
@@ -207,7 +217,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/products/sample-product",
+							"raw": "{{base_url}}/api/v1/products/sample-product-slug",
 							"host": [
 								"{{base_url}}"
 							],
@@ -215,7 +225,7 @@
 								"api",
 								"v1",
 								"products",
-								"sample-product"
+								"sample-product-slug"
 							]
 						}
 					},

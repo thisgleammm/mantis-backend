@@ -6,6 +6,8 @@ package repo
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
@@ -17,11 +19,13 @@ type Querier interface {
 	FindProductBySlug(ctx context.Context, slug string) (FindProductBySlugRow, error)
 	FindUserByEmailForLogin(ctx context.Context, email string) (FindUserByEmailForLoginRow, error)
 	// Untuk detail user (misal untuk update profile), kita tidak menarik 'password' juga.
-	FindUserByID(ctx context.Context, id string) (FindUserByIDRow, error)
+	FindUserByID(ctx context.Context, id pgtype.UUID) (FindUserByIDRow, error)
 	ListCarts(ctx context.Context) ([]Cart, error)
 	ListCategories(ctx context.Context) ([]Category, error)
+	ListProductImages(ctx context.Context, productID int64) ([]ListProductImagesRow, error)
+	ListProductVariants(ctx context.Context, productID int64) ([]ListProductVariantsRow, error)
 	// Untuk daftar produk, kita tidak menarik 'description' dan 'specifications' agar payload ringan.
-	ListProducts(ctx context.Context) ([]ListProductsRow, error)
+	ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error)
 	// Mengecualikan 'password' untuk keamanan.
 	ListUsers(ctx context.Context) ([]ListUsersRow, error)
 }

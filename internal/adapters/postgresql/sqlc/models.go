@@ -8,9 +8,26 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Address struct {
+	ID            pgtype.UUID        `json:"id"`
+	UserID        pgtype.UUID        `json:"user_id"`
+	RecipientName string             `json:"recipient_name"`
+	PhoneNumber   string             `json:"phone_number"`
+	Province      string             `json:"province"`
+	City          string             `json:"city"`
+	District      string             `json:"district"`
+	PostalCode    string             `json:"postal_code"`
+	FullAddress   string             `json:"full_address"`
+	Label         pgtype.Text        `json:"label"`
+	Coordinates   pgtype.Text        `json:"coordinates"`
+	IsPrimary     bool               `json:"is_primary"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Cart struct {
-	ID        string             `json:"id"`
-	UserID    string             `json:"user_id"`
+	ID        pgtype.UUID        `json:"id"`
+	UserID    pgtype.UUID        `json:"user_id"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
@@ -44,8 +61,29 @@ type Product struct {
 	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
 }
 
+type ProductVariant struct {
+	ID               int64              `json:"id"`
+	ProductID        int64              `json:"product_id"`
+	VariantName      string             `json:"variant_name"`
+	PriceExtra       pgtype.Numeric     `json:"price_extra"`
+	Stock            int32              `json:"stock"`
+	StockKeepingUnit string             `json:"stock_keeping_unit"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type ProductsImage struct {
+	ID        int64              `json:"id"`
+	ProductID int64              `json:"product_id"`
+	ImageUrl  string             `json:"image_url"`
+	SortOrder int32              `json:"sort_order"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
 type User struct {
-	ID          string             `json:"id"`
+	ID          pgtype.UUID        `json:"id"`
 	Username    string             `json:"username"`
 	Name        string             `json:"name"`
 	Password    string             `json:"password"`

@@ -5,7 +5,8 @@ SELECT
     rating_average, rating_count, created_at
 FROM products
 WHERE deleted_at IS NULL
-ORDER BY created_at DESC;
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2;
 
 -- name: FindProductByID :one
 -- Untuk detail satu produk, baru kita tarik seluruh data beratnya.
@@ -70,3 +71,14 @@ RETURNING id, category_id, name, slug, description, base_price, discount_price, 
 SELECT id, user_id, created_at, updated_at
 FROM carts
 ORDER BY created_at DESC;
+
+-- name: ListProductImages :many
+SELECT id, image_url, sort_order
+FROM products_images
+WHERE product_id = $1
+ORDER BY sort_order ASC;
+
+-- name: ListProductVariants :many
+SELECT id, variant_name, price_extra, stock, stock_keeping_unit
+FROM product_variants
+WHERE product_id = $1 AND deleted_at IS NULL;

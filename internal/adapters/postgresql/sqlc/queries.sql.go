@@ -93,7 +93,7 @@ type CreateUserParams struct {
 }
 
 type CreateUserRow struct {
-	ID          string             `json:"id"`
+	ID          pgtype.UUID        `json:"id"`
 	Username    string             `json:"username"`
 	Name        string             `json:"name"`
 	Email       string             `json:"email"`
@@ -244,10 +244,10 @@ WHERE email = $1 AND deleted_at IS NULL
 `
 
 type FindUserByEmailForLoginRow struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	ID       pgtype.UUID `json:"id"`
+	Name     string      `json:"name"`
+	Email    string      `json:"email"`
+	Password string      `json:"password"`
 }
 
 func (q *Queries) FindUserByEmailForLogin(ctx context.Context, email string) (FindUserByEmailForLoginRow, error) {
@@ -270,7 +270,7 @@ WHERE id = $1 AND deleted_at IS NULL
 `
 
 type FindUserByIDRow struct {
-	ID          string             `json:"id"`
+	ID          pgtype.UUID        `json:"id"`
 	Name        string             `json:"name"`
 	Email       string             `json:"email"`
 	PhoneNumber pgtype.Text        `json:"phone_number"`
@@ -278,7 +278,7 @@ type FindUserByIDRow struct {
 }
 
 // Untuk detail user (misal untuk update profile), kita tidak menarik 'password' juga.
-func (q *Queries) FindUserByID(ctx context.Context, id string) (FindUserByIDRow, error) {
+func (q *Queries) FindUserByID(ctx context.Context, id pgtype.UUID) (FindUserByIDRow, error) {
 	row := q.db.QueryRow(ctx, findUserByID, id)
 	var i FindUserByIDRow
 	err := row.Scan(
@@ -359,6 +359,79 @@ func (q *Queries) ListCategories(ctx context.Context) ([]Category, error) {
 	return items, nil
 }
 
+const listProductImages = `-- name: ListProductImages :many
+SELECT id, image_url, sort_order
+FROM products_images
+WHERE product_id = $1
+ORDER BY sort_order ASC
+`
+
+type ListProductImagesRow struct {
+	ID        int64  `json:"id"`
+	ImageUrl  string `json:"image_url"`
+	SortOrder int32  `json:"sort_order"`
+}
+
+func (q *Queries) ListProductImages(ctx context.Context, productID int64) ([]ListProductImagesRow, error) {
+	rows, err := q.db.Query(ctx, listProductImages, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListProductImagesRow
+	for rows.Next() {
+		var i ListProductImagesRow
+		if err := rows.Scan(&i.ID, &i.ImageUrl, &i.SortOrder); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listProductVariants = `-- name: ListProductVariants :many
+SELECT id, variant_name, price_extra, stock, stock_keeping_unit
+FROM product_variants
+WHERE product_id = $1 AND deleted_at IS NULL
+`
+
+type ListProductVariantsRow struct {
+	ID               int64          `json:"id"`
+	VariantName      string         `json:"variant_name"`
+	PriceExtra       pgtype.Numeric `json:"price_extra"`
+	Stock            int32          `json:"stock"`
+	StockKeepingUnit string         `json:"stock_keeping_unit"`
+}
+
+func (q *Queries) ListProductVariants(ctx context.Context, productID int64) ([]ListProductVariantsRow, error) {
+	rows, err := q.db.Query(ctx, listProductVariants, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListProductVariantsRow
+	for rows.Next() {
+		var i ListProductVariantsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.VariantName,
+			&i.PriceExtra,
+			&i.Stock,
+			&i.StockKeepingUnit,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listProducts = `-- name: ListProducts :many
 SELECT 
     id, category_id, name, slug, base_price, discount_price, 
@@ -366,7 +439,13 @@ SELECT
 FROM products
 WHERE deleted_at IS NULL
 ORDER BY created_at DESC
+LIMIT $1 OFFSET $2
 `
+
+type ListProductsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
 
 type ListProductsRow struct {
 	ID            int64              `json:"id"`
@@ -381,8 +460,8 @@ type ListProductsRow struct {
 }
 
 // Untuk daftar produk, kita tidak menarik 'description' dan 'specifications' agar payload ringan.
-func (q *Queries) ListProducts(ctx context.Context) ([]ListProductsRow, error) {
-	rows, err := q.db.Query(ctx, listProducts)
+func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error) {
+	rows, err := q.db.Query(ctx, listProducts, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -419,7 +498,7 @@ WHERE deleted_at IS NULL
 `
 
 type ListUsersRow struct {
-	ID          string             `json:"id"`
+	ID          pgtype.UUID        `json:"id"`
 	Name        string             `json:"name"`
 	Email       string             `json:"email"`
 	PhoneNumber pgtype.Text        `json:"phone_number"`

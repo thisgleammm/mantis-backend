@@ -1,0 +1,63 @@
+name: Database Migrations (Goose)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'internal/adapters/postgresql/migrations/**'
+  push:
+    branches: [main]
+    paths:
+      - 'internal/adapters/postgresql/migrations/**'
+
+jobs:
+  # 1. Test migrations on a temporary Neon branch (on PR)
+  test-migrations:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create Neon branch for testing
+        id: create-branch
+        uses: neondatabase/create-branch-action@v5
+        with:
+          project_id: orange-bird-ao0erzab
+          parent: main
+          branch_name: migration-test-${{ github.run_id }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Run migrations on test branch
+        run: go run cmd/migrate/main.go up
+        env:
+          GOOSE_DBSTRING: ${{ steps.create-branch.outputs.db_url }}
+
+      - name: Delete test branch
+        if: always()
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: orange-bird-ao0erzab
+          branch: migration-test-${{ github.run_id }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+  # 2. Apply to production (on Push to Main)
+  deploy-migrations:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Run Migrations on Production
+        run: go run cmd/migrate/main.go up
+        env:
+          GOOSE_DBSTRING: ${{ secrets.GOOSE_DBSTRING }}

@@ -28,7 +28,7 @@ type CreateProductParams struct {
 	Description    pgtype.Text    `json:"description"`
 	BasePrice      pgtype.Numeric `json:"base_price"`
 	DiscountPrice  pgtype.Numeric `json:"discount_price"`
-	Weight         pgtype.Numeric `json:"weight"`
+	Weight         int32          `json:"weight"`
 	Specifications []byte         `json:"specifications"`
 }
 
@@ -40,7 +40,7 @@ type CreateProductRow struct {
 	Description    pgtype.Text        `json:"description"`
 	BasePrice      pgtype.Numeric     `json:"base_price"`
 	DiscountPrice  pgtype.Numeric     `json:"discount_price"`
-	Weight         pgtype.Numeric     `json:"weight"`
+	Weight         int32              `json:"weight"`
 	Specifications []byte             `json:"specifications"`
 	RatingAverage  pgtype.Numeric     `json:"rating_average"`
 	RatingCount    int32              `json:"rating_count"`
@@ -93,7 +93,7 @@ type CreateUserParams struct {
 }
 
 type CreateUserRow struct {
-	ID          int64              `json:"id"`
+	ID          string             `json:"id"`
 	Username    string             `json:"username"`
 	Name        string             `json:"name"`
 	Email       string             `json:"email"`
@@ -161,7 +161,7 @@ type FindProductByIDRow struct {
 	Description    pgtype.Text        `json:"description"`
 	BasePrice      pgtype.Numeric     `json:"base_price"`
 	DiscountPrice  pgtype.Numeric     `json:"discount_price"`
-	Weight         pgtype.Numeric     `json:"weight"`
+	Weight         int32              `json:"weight"`
 	Specifications []byte             `json:"specifications"`
 	RatingAverage  pgtype.Numeric     `json:"rating_average"`
 	RatingCount    int32              `json:"rating_count"`
@@ -208,7 +208,7 @@ type FindProductBySlugRow struct {
 	Description    pgtype.Text        `json:"description"`
 	BasePrice      pgtype.Numeric     `json:"base_price"`
 	DiscountPrice  pgtype.Numeric     `json:"discount_price"`
-	Weight         pgtype.Numeric     `json:"weight"`
+	Weight         int32              `json:"weight"`
 	Specifications []byte             `json:"specifications"`
 	RatingAverage  pgtype.Numeric     `json:"rating_average"`
 	RatingCount    int32              `json:"rating_count"`
@@ -244,7 +244,7 @@ WHERE email = $1 AND deleted_at IS NULL
 `
 
 type FindUserByEmailForLoginRow struct {
-	ID       int64  `json:"id"`
+	ID       string `json:"id"`
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -270,7 +270,7 @@ WHERE id = $1 AND deleted_at IS NULL
 `
 
 type FindUserByIDRow struct {
-	ID          int64              `json:"id"`
+	ID          string             `json:"id"`
 	Name        string             `json:"name"`
 	Email       string             `json:"email"`
 	PhoneNumber pgtype.Text        `json:"phone_number"`
@@ -278,7 +278,7 @@ type FindUserByIDRow struct {
 }
 
 // Untuk detail user (misal untuk update profile), kita tidak menarik 'password' juga.
-func (q *Queries) FindUserByID(ctx context.Context, id int64) (FindUserByIDRow, error) {
+func (q *Queries) FindUserByID(ctx context.Context, id string) (FindUserByIDRow, error) {
 	row := q.db.QueryRow(ctx, findUserByID, id)
 	var i FindUserByIDRow
 	err := row.Scan(
@@ -289,6 +289,37 @@ func (q *Queries) FindUserByID(ctx context.Context, id int64) (FindUserByIDRow, 
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const listCarts = `-- name: ListCarts :many
+SELECT id, user_id, created_at, updated_at
+FROM carts
+ORDER BY created_at DESC
+`
+
+func (q *Queries) ListCarts(ctx context.Context) ([]Cart, error) {
+	rows, err := q.db.Query(ctx, listCarts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Cart
+	for rows.Next() {
+		var i Cart
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listCategories = `-- name: ListCategories :many
@@ -388,7 +419,7 @@ WHERE deleted_at IS NULL
 `
 
 type ListUsersRow struct {
-	ID          int64              `json:"id"`
+	ID          string             `json:"id"`
 	Name        string             `json:"name"`
 	Email       string             `json:"email"`
 	PhoneNumber pgtype.Text        `json:"phone_number"`

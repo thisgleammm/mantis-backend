@@ -3,7 +3,6 @@ package users
 import (
 	"log/slog"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/thisgleammm/mantis-backend/internal/auth"
@@ -18,15 +17,6 @@ func NewHandler(service Service) *handler {
 	return &handler{
 		service: service,
 	}
-}
-
-type userResponse struct {
-	ID          int64  `json:"id"`
-	Username    string `json:"username"`
-	Name        string `json:"name"`
-	Email       string `json:"email"`
-	PhoneNumber string `json:"phone_number"`
-	CreatedAt   string `json:"created_at"`
 }
 
 // ListUsers godoc
@@ -54,16 +44,14 @@ func (h *handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Param id path int true "User ID"
+// @Param id path string true "User ID"
 // @Success 200 {object} userResponse
-// @Failure 400 {string} string "invalid user id"
 // @Failure 404 {string} string "user not found"
 // @Router /users/{id} [get]
 func (h *handler) FindUserByID(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		slog.Warn("FindUserByID: invalid id", "id", idStr)
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		slog.Warn("FindUserByID: empty id")
 		http.Error(w, "invalid user id", http.StatusBadRequest)
 		return
 	}
@@ -97,9 +85,9 @@ func (h *handler) GetMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, ok := userIDVal.(int64)
+	userID, ok := userIDVal.(string)
 	if !ok {
-		slog.Error("GetMe: user id in context is not int64", "value", userIDVal)
+		slog.Error("GetMe: user id in context is not string", "value", userIDVal)
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}

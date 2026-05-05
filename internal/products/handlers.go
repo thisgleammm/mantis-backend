@@ -165,7 +165,7 @@ func (h *handler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	// Wait, let's just use json mapping? No, we can set pgtype.Numeric by scanning string.
 	_ = params.BasePrice.Scan(strconv.FormatFloat(req.BasePrice, 'f', -1, 64))
 	_ = params.DiscountPrice.Scan(strconv.FormatFloat(req.DiscountPrice, 'f', -1, 64))
-	_ = params.Weight.Scan(strconv.FormatFloat(req.Weight, 'f', -1, 64))
+	params.Weight = int32(req.Weight)
 
 	specs, _ := stdjson.Marshal(req.Specifications)
 	params.Specifications = specs

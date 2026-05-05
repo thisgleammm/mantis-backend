@@ -14,6 +14,7 @@ import (
 	_ "github.com/thisgleammm/mantis-backend/cmd/docs"
 	repo "github.com/thisgleammm/mantis-backend/internal/adapters/postgresql/sqlc"
 	"github.com/thisgleammm/mantis-backend/internal/auth"
+	"github.com/thisgleammm/mantis-backend/internal/carts"
 	"github.com/thisgleammm/mantis-backend/internal/categories"
 	"github.com/thisgleammm/mantis-backend/internal/products"
 	"github.com/thisgleammm/mantis-backend/internal/users"
@@ -62,6 +63,9 @@ func (app *application) mount() http.Handler {
 	authService := auth.NewService(repo.New(app.db))
 	authHandler := auth.NewHandler(authService)
 
+	cartsService := carts.NewService(repo.New(app.db))
+	cartsHandler := carts.NewHandler(cartsService)
+
 	// API v1 Routing
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/products", func(r chi.Router) {
@@ -80,6 +84,10 @@ func (app *application) mount() http.Handler {
 			r.Get("/", userHandler.ListUsers)
 			r.Get("/{id:[0-9]+}", userHandler.FindUserByID)
 			r.With(auth.Middleware).Get("/me", userHandler.GetMe)
+		})
+
+		r.Route("/carts", func(r chi.Router) {
+			r.Get("/", cartsHandler.ListCarts)
 		})
 
 		r.Route("/auth", func(r chi.Router) {

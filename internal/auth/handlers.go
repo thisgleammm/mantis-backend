@@ -25,19 +25,6 @@ func NewHandler(service Service) *handler {
 	return &handler{service: service}
 }
 
-type registerResponse struct {
-	ID          int64  `json:"id"`
-	Username    string `json:"username"`
-	Name        string `json:"name"`
-	Email       string `json:"email"`
-	PhoneNumber string `json:"phone_number"`
-	CreatedAt   string `json:"created_at"`
-}
-
-type loginResponse struct {
-	Token string `json:"token"`
-}
-
 // Register godoc
 // @Summary Register a new user
 // @Description Create a new user account

@@ -66,4 +66,7 @@ INSERT INTO products (
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8
 )
-RETURNING id, category_id, name, slug, description, base_price, discount_price, weight, specifications, rating_average, rating_count, created_at, updated_at;
+RETURNING id, category_id, name, slug, description, base_price, discount_price, weight, specifications, rating_average, rating_count, created_at, updated_at;-- name: ListCarts :many
+SELECT id, user_id, created_at, updated_at
+FROM carts
+ORDER BY created_at DESC;

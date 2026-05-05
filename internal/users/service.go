@@ -8,7 +8,7 @@ import (
 
 type Service interface {
 	ListUsers(ctx context.Context) ([]repo.ListUsersRow, error)
-	FindUserByID(ctx context.Context, id int64) (repo.FindUserByIDRow, error)
+	FindUserByID(ctx context.Context, id string) (repo.FindUserByIDRow, error)
 }
 
 type svc struct {
@@ -25,6 +25,6 @@ func (s *svc) ListUsers(ctx context.Context) ([]repo.ListUsersRow, error) {
 	return s.repo.ListUsers(ctx)
 }
 
-func (s *svc) FindUserByID(ctx context.Context, id int64) (repo.FindUserByIDRow, error) {
+func (s *svc) FindUserByID(ctx context.Context, id string) (repo.FindUserByIDRow, error) {
 	return s.repo.FindUserByID(ctx, id)
 }

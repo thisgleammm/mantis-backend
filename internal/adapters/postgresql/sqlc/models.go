@@ -8,6 +8,13 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Cart struct {
+	ID        string             `json:"id"`
+	UserID    string             `json:"user_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Category struct {
 	ID             int64              `json:"id"`
 	Name           string             `json:"name"`
@@ -28,7 +35,7 @@ type Product struct {
 	Description    pgtype.Text        `json:"description"`
 	BasePrice      pgtype.Numeric     `json:"base_price"`
 	DiscountPrice  pgtype.Numeric     `json:"discount_price"`
-	Weight         pgtype.Numeric     `json:"weight"`
+	Weight         int32              `json:"weight"`
 	Specifications []byte             `json:"specifications"`
 	RatingAverage  pgtype.Numeric     `json:"rating_average"`
 	RatingCount    int32              `json:"rating_count"`
@@ -38,7 +45,7 @@ type Product struct {
 }
 
 type User struct {
-	ID          int64              `json:"id"`
+	ID          string             `json:"id"`
 	Username    string             `json:"username"`
 	Name        string             `json:"name"`
 	Password    string             `json:"password"`

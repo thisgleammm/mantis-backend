@@ -17,7 +17,8 @@ type Querier interface {
 	FindProductBySlug(ctx context.Context, slug string) (FindProductBySlugRow, error)
 	FindUserByEmailForLogin(ctx context.Context, email string) (FindUserByEmailForLoginRow, error)
 	// Untuk detail user (misal untuk update profile), kita tidak menarik 'password' juga.
-	FindUserByID(ctx context.Context, id int64) (FindUserByIDRow, error)
+	FindUserByID(ctx context.Context, id string) (FindUserByIDRow, error)
+	ListCarts(ctx context.Context) ([]Cart, error)
 	ListCategories(ctx context.Context) ([]Category, error)
 	// Untuk daftar produk, kita tidak menarik 'description' dan 'specifications' agar payload ringan.
 	ListProducts(ctx context.Context) ([]ListProductsRow, error)

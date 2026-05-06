@@ -3,6 +3,7 @@ package users
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	repo "github.com/thisgleammm/mantis-backend/internal/adapters/postgresql/sqlc"
 )
 
@@ -26,5 +27,9 @@ func (s *svc) ListUsers(ctx context.Context) ([]repo.ListUsersRow, error) {
 }
 
 func (s *svc) FindUserByID(ctx context.Context, id string) (repo.FindUserByIDRow, error) {
-	return s.repo.FindUserByID(ctx, id)
+	var uuid pgtype.UUID
+	if err := uuid.Scan(id); err != nil {
+		return repo.FindUserByIDRow{}, err
+	}
+	return s.repo.FindUserByID(ctx, uuid)
 }

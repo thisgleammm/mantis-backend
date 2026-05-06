@@ -47,7 +47,7 @@ func (app *application) mount() http.Handler {
 		w.Write([]byte("all good"))
 	})
 
-	r.Get("/swagger/*", httpSwagger.Handler(
+	r.With(auth.RelaxedSecurityHeaders).Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"), //The url pointing to API definition
 	))
 

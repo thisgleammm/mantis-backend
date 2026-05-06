@@ -110,7 +110,7 @@ func (s *svc) Login(ctx context.Context, req LoginRequest) (string, error) {
 		return "", errors.New("invalid email or password")
 	}
 
-	token, err := GenerateToken(user.ID)
+	token, err := GenerateToken(user.ID.String())
 	if err != nil {
 		slog.Error("Login: token generation failed", "error", err, "user_id", user.ID)
 		return "", err

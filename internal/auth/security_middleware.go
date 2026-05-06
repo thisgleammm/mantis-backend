@@ -21,3 +21,11 @@ func SecurityHeaders(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+func RelaxedSecurityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Override CSP for Swagger UI
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://validator.swagger.io; connect-src 'self';")
+		next.ServeHTTP(w, r)
+	})
+}

@@ -87,6 +87,7 @@ func (app *application) mount() http.Handler {
 		})
 
 		r.Route("/carts", func(r chi.Router) {
+			r.Use(auth.Middleware)
 			r.Get("/", cartsHandler.ListCarts)
 		})
 

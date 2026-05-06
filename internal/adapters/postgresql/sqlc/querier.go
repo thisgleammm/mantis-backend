@@ -20,7 +20,7 @@ type Querier interface {
 	FindUserByEmailForLogin(ctx context.Context, email string) (FindUserByEmailForLoginRow, error)
 	// Untuk detail user (misal untuk update profile), kita tidak menarik 'password' juga.
 	FindUserByID(ctx context.Context, id pgtype.UUID) (FindUserByIDRow, error)
-	ListCarts(ctx context.Context) ([]Cart, error)
+	ListCarts(ctx context.Context, userID pgtype.UUID) ([]Cart, error)
 	ListCategories(ctx context.Context) ([]Category, error)
 	ListProductImages(ctx context.Context, productID int64) ([]ListProductImagesRow, error)
 	ListProductVariants(ctx context.Context, productID int64) ([]ListProductVariantsRow, error)

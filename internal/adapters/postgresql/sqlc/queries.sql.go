@@ -294,11 +294,12 @@ func (q *Queries) FindUserByID(ctx context.Context, id pgtype.UUID) (FindUserByI
 const listCarts = `-- name: ListCarts :many
 SELECT id, user_id, created_at, updated_at
 FROM carts
+WHERE user_id = $1
 ORDER BY created_at DESC
 `
 
-func (q *Queries) ListCarts(ctx context.Context) ([]Cart, error) {
-	rows, err := q.db.Query(ctx, listCarts)
+func (q *Queries) ListCarts(ctx context.Context, userID pgtype.UUID) ([]Cart, error) {
+	rows, err := q.db.Query(ctx, listCarts, userID)
 	if err != nil {
 		return nil, err
 	}

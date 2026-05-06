@@ -129,7 +129,12 @@
         },
         "/carts": {
             "get": {
-                "description": "Get a list of all carts",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get a list of carts belonging to the authenticated user",
                 "consumes": [
                     "application/json"
                 ],
@@ -139,7 +144,7 @@
                 "tags": [
                     "carts"
                 ],
-                "summary": "List all carts",
+                "summary": "List user's carts",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -148,6 +153,12 @@
                             "items": {
                                 "$ref": "#/definitions/carts.cartResponse"
                             }
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 }

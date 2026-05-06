@@ -135,7 +135,12 @@ const docTemplate = `{
         },
         "/carts": {
             "get": {
-                "description": "Get a list of all carts",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get a list of carts belonging to the authenticated user",
                 "consumes": [
                     "application/json"
                 ],
@@ -145,7 +150,7 @@ const docTemplate = `{
                 "tags": [
                     "carts"
                 ],
-                "summary": "List all carts",
+                "summary": "List user's carts",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -154,6 +159,12 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/carts.cartResponse"
                             }
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 }

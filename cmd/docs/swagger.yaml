@@ -217,7 +217,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get a list of all carts
+      description: Get a list of carts belonging to the authenticated user
       produces:
       - application/json
       responses:
@@ -227,7 +227,13 @@ paths:
             items:
               $ref: '#/definitions/carts.cartResponse'
             type: array
-      summary: List all carts
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: List user's carts
       tags:
       - carts
   /categories:

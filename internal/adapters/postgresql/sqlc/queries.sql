@@ -70,6 +70,7 @@ INSERT INTO products (
 RETURNING id, category_id, name, slug, description, base_price, discount_price, weight, specifications, rating_average, rating_count, created_at, updated_at;-- name: ListCarts :many
 SELECT id, user_id, created_at, updated_at
 FROM carts
+WHERE user_id = $1
 ORDER BY created_at DESC;
 
 -- name: ListProductImages :many

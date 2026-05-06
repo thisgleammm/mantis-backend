@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/thisgleammm/mantis-backend/internal/auth"
 	"github.com/thisgleammm/mantis-backend/internal/json"
 )
 
@@ -23,15 +24,29 @@ type cartResponse struct {
 }
 
 // ListCarts godoc
-// @Summary List all carts
-// @Description Get a list of all carts
+// @Summary List user's carts
+// @Description Get a list of carts belonging to the authenticated user
 // @Tags carts
 // @Accept  json
 // @Produce  json
 // @Success 200 {array} cartResponse
+// @Failure 401 {string} string "unauthorized"
+// @Security ApiKeyAuth
 // @Router /carts [get]
 func (h *handler) ListCarts(w http.ResponseWriter, r *http.Request) {
-	carts, err := h.service.ListCarts(r.Context())
+	userIDVal := r.Context().Value(auth.UserIDKey)
+	if userIDVal == nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	userID, ok := userIDVal.(string)
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	carts, err := h.service.ListCarts(r.Context(), userID)
 	if err != nil {
 		slog.Error("ListCarts failed", "error", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)

@@ -7,27 +7,24 @@ import (
 )
 
 type ProductDetail struct {
-	repo.FindProductBySlugRow
+	Product  repo.Product                  `json:"product"`
 	Images   []repo.ListProductImagesRow   `json:"images"`
 	Variants []repo.ListProductVariantsRow `json:"variants"`
 }
 
 type Service interface {
 	ListProducts(ctx context.Context, limit, offset int32) ([]repo.ListProductsRow, error)
-	FindProductByID(ctx context.Context, id int64) (repo.FindProductByIDRow, error)
+	FindProductByID(ctx context.Context, id int64) (ProductDetail, error)
 	FindProductBySlug(ctx context.Context, slug string) (ProductDetail, error)
 	CreateProduct(ctx context.Context, params repo.CreateProductParams) (repo.CreateProductRow, error)
 }
 
 type svc struct {
-	//repository
 	repo repo.Querier
 }
 
 func NewService(repo repo.Querier) Service {
-	return &svc{
-		repo: repo,
-	}
+	return &svc{repo: repo}
 }
 
 func (s *svc) ListProducts(ctx context.Context, limit, offset int32) ([]repo.ListProductsRow, error) {
@@ -37,8 +34,30 @@ func (s *svc) ListProducts(ctx context.Context, limit, offset int32) ([]repo.Lis
 	})
 }
 
-func (s *svc) FindProductByID(ctx context.Context, id int64) (repo.FindProductByIDRow, error) {
-	return s.repo.FindProductByID(ctx, id)
+func (s *svc) FindProductByID(ctx context.Context, id int64) (ProductDetail, error) {
+	product, err := s.repo.FindProductByID(ctx, id)
+	if err != nil {
+		return ProductDetail{}, err
+	}
+
+	// Map FindProductByIDRow to repo.Product
+	p := repo.Product{
+		ID:             product.ID,
+		CategoryID:     product.CategoryID,
+		Name:           product.Name,
+		Slug:           product.Slug,
+		Description:    product.Description,
+		BasePrice:      product.BasePrice,
+		DiscountPrice:  product.DiscountPrice,
+		Weight:         product.Weight,
+		Specifications: product.Specifications,
+		RatingAverage:  product.RatingAverage,
+		RatingCount:    product.RatingCount,
+		CreatedAt:      product.CreatedAt,
+		UpdatedAt:      product.UpdatedAt,
+	}
+
+	return s.fetchProductExtras(ctx, p)
 }
 
 func (s *svc) FindProductBySlug(ctx context.Context, slug string) (ProductDetail, error) {
@@ -47,20 +66,40 @@ func (s *svc) FindProductBySlug(ctx context.Context, slug string) (ProductDetail
 		return ProductDetail{}, err
 	}
 
-	images, err := s.repo.ListProductImages(ctx, product.ID)
+	p := repo.Product{
+		ID:             product.ID,
+		CategoryID:     product.CategoryID,
+		Name:           product.Name,
+		Slug:           product.Slug,
+		Description:    product.Description,
+		BasePrice:      product.BasePrice,
+		DiscountPrice:  product.DiscountPrice,
+		Weight:         product.Weight,
+		Specifications: product.Specifications,
+		RatingAverage:  product.RatingAverage,
+		RatingCount:    product.RatingCount,
+		CreatedAt:      product.CreatedAt,
+		UpdatedAt:      product.UpdatedAt,
+	}
+
+	return s.fetchProductExtras(ctx, p)
+}
+
+func (s *svc) fetchProductExtras(ctx context.Context, p repo.Product) (ProductDetail, error) {
+	images, err := s.repo.ListProductImages(ctx, p.ID)
 	if err != nil {
 		images = []repo.ListProductImagesRow{}
 	}
 
-	variants, err := s.repo.ListProductVariants(ctx, product.ID)
+	variants, err := s.repo.ListProductVariants(ctx, p.ID)
 	if err != nil {
 		variants = []repo.ListProductVariantsRow{}
 	}
 
 	return ProductDetail{
-		FindProductBySlugRow: product,
-		Images:               images,
-		Variants:             variants,
+		Product:  p,
+		Images:   images,
+		Variants: variants,
 	}, nil
 }
 

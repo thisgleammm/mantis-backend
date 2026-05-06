@@ -652,6 +652,20 @@ const docTemplate = `{
                 }
             }
         },
+        "products.imageResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "sort_order": {
+                    "type": "integer"
+                }
+            }
+        },
         "products.productResponse": {
             "type": "object",
             "properties": {
@@ -673,6 +687,12 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/products.imageResponse"
+                    }
+                },
                 "name": {
                     "type": "string"
                 },
@@ -688,8 +708,34 @@ const docTemplate = `{
                 "updated_at": {
                     "type": "string"
                 },
+                "variants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/products.variantResponse"
+                    }
+                },
                 "weight": {
                     "type": "number"
+                }
+            }
+        },
+        "products.variantResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "price_extra": {
+                    "type": "number"
+                },
+                "stock": {
+                    "type": "integer"
+                },
+                "stock_keeping_unit": {
+                    "type": "string"
+                },
+                "variant_name": {
+                    "type": "string"
                 }
             }
         },

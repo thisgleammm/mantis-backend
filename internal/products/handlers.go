@@ -23,18 +23,34 @@ func NewHandler(service Service) *handler {
 }
 
 type productResponse struct {
-	ID            int64   `json:"id"`
-	CategoryID    int64   `json:"category_id"`
-	Name          string  `json:"name"`
-	Slug          string  `json:"slug"`
-	Description   string  `json:"description"`
-	BasePrice     float64 `json:"base_price"`
-	DiscountPrice float64 `json:"discount_price"`
-	Weight        float64 `json:"weight"`
-	RatingAverage float64 `json:"rating_average"`
-	RatingCount   int32   `json:"rating_count"`
-	CreatedAt     string  `json:"created_at"`
-	UpdatedAt     string  `json:"updated_at"`
+	ID            int64             `json:"id"`
+	CategoryID    int64             `json:"category_id"`
+	Name          string            `json:"name"`
+	Slug          string            `json:"slug"`
+	Description   string            `json:"description"`
+	BasePrice     float64           `json:"base_price"`
+	DiscountPrice float64           `json:"discount_price"`
+	Weight        float64           `json:"weight"`
+	RatingAverage float64           `json:"rating_average"`
+	RatingCount   int32             `json:"rating_count"`
+	Images        []imageResponse   `json:"images,omitempty"`
+	Variants      []variantResponse `json:"variants,omitempty"`
+	CreatedAt     string            `json:"created_at"`
+	UpdatedAt     string            `json:"updated_at"`
+}
+
+type imageResponse struct {
+	ID        int64  `json:"id"`
+	ImageUrl  string `json:"image_url"`
+	SortOrder int32  `json:"sort_order"`
+}
+
+type variantResponse struct {
+	ID               int64   `json:"id"`
+	VariantName      string  `json:"variant_name"`
+	PriceExtra       float64 `json:"price_extra"`
+	Stock            int32   `json:"stock"`
+	StockKeepingUnit string  `json:"stock_keeping_unit"`
 }
 
 var _ = productResponse{}
@@ -71,7 +87,26 @@ func (h *handler) ListProducts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.Write(w, http.StatusOK, products)
+	var res []productResponse
+	for _, p := range products {
+		basePrice, _ := p.BasePrice.Float64Value()
+		discountPrice, _ := p.DiscountPrice.Float64Value()
+		ratingAverage, _ := p.RatingAverage.Float64Value()
+
+		res = append(res, productResponse{
+			ID:            p.ID,
+			CategoryID:    p.CategoryID.Int64,
+			Name:          p.Name,
+			Slug:          p.Slug,
+			BasePrice:     basePrice.Float64,
+			DiscountPrice: discountPrice.Float64,
+			RatingAverage: ratingAverage.Float64,
+			RatingCount:   p.RatingCount,
+			CreatedAt:     p.CreatedAt.Time.String(),
+		})
+	}
+
+	json.Write(w, http.StatusOK, res)
 }
 
 // FindProductByID godoc
@@ -95,12 +130,11 @@ func (h *handler) FindProductByID(w http.ResponseWriter, r *http.Request) {
 
 	product, err := h.service.FindProductByID(r.Context(), id)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
-	json.Write(w, http.StatusOK, product)
+	json.Write(w, http.StatusOK, toProductResponse(product))
 }
 
 // FindProductBySlug godoc
@@ -123,12 +157,53 @@ func (h *handler) FindProductBySlug(w http.ResponseWriter, r *http.Request) {
 
 	product, err := h.service.FindProductBySlug(r.Context(), slug)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
-	json.Write(w, http.StatusOK, product)
+	json.Write(w, http.StatusOK, toProductResponse(product))
+}
+
+func toProductResponse(p ProductDetail) productResponse {
+	basePrice, _ := p.Product.BasePrice.Float64Value()
+	discountPrice, _ := p.Product.DiscountPrice.Float64Value()
+	ratingAverage, _ := p.Product.RatingAverage.Float64Value()
+
+	res := productResponse{
+		ID:            p.Product.ID,
+		CategoryID:    p.Product.CategoryID.Int64,
+		Name:          p.Product.Name,
+		Slug:          p.Product.Slug,
+		Description:   p.Product.Description.String,
+		BasePrice:     basePrice.Float64,
+		DiscountPrice: discountPrice.Float64,
+		Weight:        float64(p.Product.Weight),
+		RatingAverage: ratingAverage.Float64,
+		RatingCount:   p.Product.RatingCount,
+		CreatedAt:     p.Product.CreatedAt.Time.String(),
+		UpdatedAt:     p.Product.UpdatedAt.Time.String(),
+	}
+
+	for _, img := range p.Images {
+		res.Images = append(res.Images, imageResponse{
+			ID:        img.ID,
+			ImageUrl:  img.ImageUrl,
+			SortOrder: img.SortOrder,
+		})
+	}
+
+	for _, v := range p.Variants {
+		vPrice, _ := v.PriceExtra.Float64Value()
+		res.Variants = append(res.Variants, variantResponse{
+			ID:               v.ID,
+			VariantName:      v.VariantName,
+			PriceExtra:       vPrice.Float64,
+			Stock:            v.Stock,
+			StockKeepingUnit: v.StockKeepingUnit,
+		})
+	}
+
+	return res
 }
 
 type createProductRequest struct {

@@ -86,6 +86,15 @@ definitions:
       weight:
         type: number
     type: object
+  products.imageResponse:
+    properties:
+      id:
+        type: integer
+      image_url:
+        type: string
+      sort_order:
+        type: integer
+    type: object
   products.productResponse:
     properties:
       base_price:
@@ -100,6 +109,10 @@ definitions:
         type: number
       id:
         type: integer
+      images:
+        items:
+          $ref: '#/definitions/products.imageResponse'
+        type: array
       name:
         type: string
       rating_average:
@@ -110,8 +123,25 @@ definitions:
         type: string
       updated_at:
         type: string
+      variants:
+        items:
+          $ref: '#/definitions/products.variantResponse'
+        type: array
       weight:
         type: number
+    type: object
+  products.variantResponse:
+    properties:
+      id:
+        type: integer
+      price_extra:
+        type: number
+      stock:
+        type: integer
+      stock_keeping_unit:
+        type: string
+      variant_name:
+        type: string
     type: object
   users.userResponse:
     properties:

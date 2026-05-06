@@ -51,11 +51,27 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+type registerRequest struct {
+	Username    string `json:"username"`
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	Password    string `json:"password"`
+	PhoneNumber string `json:"phone_number"`
+}
+
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var user domain.User
-	if err := json.Read(w, r, &user); err != nil {
+	var req registerRequest
+	if err := json.Read(w, r, &req); err != nil {
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
+	}
+
+	user := domain.User{
+		Username:    req.Username,
+		Name:        req.Name,
+		Email:       req.Email,
+		Password:    req.Password,
+		PhoneNumber: req.PhoneNumber,
 	}
 
 	created, err := h.svc.Register(r.Context(), user)

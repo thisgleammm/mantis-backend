@@ -108,7 +108,10 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 		SameSite: sameSite,
 	})
 
-	mantisJson.Write(w, http.StatusOK, map[string]string{"message": "logged in successfully"})
+	mantisJson.Write(w, http.StatusOK, map[string]string{
+		"message": "logged in successfully",
+		"token":   token,
+	})
 }
 
 // Logout godoc

@@ -305,7 +305,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/users/1",
+							"raw": "{{base_url}}/api/v1/users/:id",
 							"host": [
 								"{{base_url}}"
 							],
@@ -313,7 +313,13 @@
 								"api",
 								"v1",
 								"users",
-								"1"
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "user-uuid-here"
+								}
 							]
 						}
 					},

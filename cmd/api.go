@@ -82,7 +82,7 @@ func (app *application) mount() http.Handler {
 
 		r.Route("/users", func(r chi.Router) {
 			r.Get("/", userHandler.ListUsers)
-			r.Get("/{id:[0-9]+}", userHandler.FindUserByID)
+			r.Get("/{id}", userHandler.FindUserByID)
 			r.With(auth.Middleware).Get("/me", userHandler.GetMe)
 		})
 

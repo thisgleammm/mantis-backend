@@ -80,6 +80,16 @@ type Cart struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
+type CartItem struct {
+	ID               pgtype.UUID        `json:"id"`
+	CartID           pgtype.UUID        `json:"cart_id"`
+	ProductID        int64              `json:"product_id"`
+	ProductVariantID pgtype.Int8        `json:"product_variant_id"`
+	Quantity         int32              `json:"quantity"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Category struct {
 	ID             int64              `json:"id"`
 	Name           string             `json:"name"`

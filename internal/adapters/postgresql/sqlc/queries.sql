@@ -83,3 +83,33 @@ ORDER BY sort_order ASC;
 SELECT id, variant_name, price_extra, stock, stock_keeping_unit
 FROM product_variants
 WHERE product_id = $1 AND deleted_at IS NULL;
+
+-- name: AddItemToCart :one
+INSERT INTO cart_items (cart_id, product_id, product_variant_id, quantity)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (cart_id, product_id, (COALESCE(product_variant_id, 0)))
+DO UPDATE SET 
+    quantity = cart_items.quantity + EXCLUDED.quantity,
+    updated_at = NOW()
+RETURNING *;
+
+-- name: UpdateItemQuantity :one
+UPDATE cart_items
+SET quantity = $2, updated_at = NOW()
+WHERE id = $1
+RETURNING *;
+
+-- name: RemoveItemFromCart :exec
+DELETE FROM cart_items
+WHERE id = $1;
+
+-- name: ListCartItems :many
+SELECT 
+    ci.id, ci.cart_id, ci.product_id, ci.product_variant_id, ci.quantity, ci.created_at, ci.updated_at,
+    p.name as product_name, p.slug as product_slug, p.base_price as product_price,
+    pv.variant_name, pv.price_extra as variant_price_extra
+FROM cart_items ci
+JOIN products p ON p.id = ci.product_id
+LEFT JOIN product_variants pv ON pv.id = ci.product_variant_id
+WHERE ci.cart_id = $1
+ORDER BY ci.created_at ASC;

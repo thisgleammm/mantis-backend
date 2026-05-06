@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	AddItemToCart(ctx context.Context, arg AddItemToCartParams) (CartItem, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (CreateProductRow, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
 	FindCategoryByID(ctx context.Context, id int64) (Category, error)
@@ -20,6 +21,7 @@ type Querier interface {
 	FindUserByEmailForLogin(ctx context.Context, email string) (FindUserByEmailForLoginRow, error)
 	// Untuk detail user (misal untuk update profile), kita tidak menarik 'password' juga.
 	FindUserByID(ctx context.Context, id pgtype.UUID) (FindUserByIDRow, error)
+	ListCartItems(ctx context.Context, cartID pgtype.UUID) ([]ListCartItemsRow, error)
 	ListCarts(ctx context.Context, userID pgtype.UUID) ([]Cart, error)
 	ListCategories(ctx context.Context) ([]Category, error)
 	ListProductImages(ctx context.Context, productID int64) ([]ListProductImagesRow, error)
@@ -28,6 +30,8 @@ type Querier interface {
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error)
 	// Mengecualikan 'password' untuk keamanan.
 	ListUsers(ctx context.Context) ([]ListUsersRow, error)
+	RemoveItemFromCart(ctx context.Context, id pgtype.UUID) error
+	UpdateItemQuantity(ctx context.Context, arg UpdateItemQuantityParams) (CartItem, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -11,6 +11,43 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addItemToCart = `-- name: AddItemToCart :one
+INSERT INTO cart_items (cart_id, product_id, product_variant_id, quantity)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (cart_id, product_id, (COALESCE(product_variant_id, 0)))
+DO UPDATE SET 
+    quantity = cart_items.quantity + EXCLUDED.quantity,
+    updated_at = NOW()
+RETURNING id, cart_id, product_id, product_variant_id, quantity, created_at, updated_at
+`
+
+type AddItemToCartParams struct {
+	CartID           pgtype.UUID `json:"cart_id"`
+	ProductID        int64       `json:"product_id"`
+	ProductVariantID pgtype.Int8 `json:"product_variant_id"`
+	Quantity         int32       `json:"quantity"`
+}
+
+func (q *Queries) AddItemToCart(ctx context.Context, arg AddItemToCartParams) (CartItem, error) {
+	row := q.db.QueryRow(ctx, addItemToCart,
+		arg.CartID,
+		arg.ProductID,
+		arg.ProductVariantID,
+		arg.Quantity,
+	)
+	var i CartItem
+	err := row.Scan(
+		&i.ID,
+		&i.CartID,
+		&i.ProductID,
+		&i.ProductVariantID,
+		&i.Quantity,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createProduct = `-- name: CreateProduct :one
 INSERT INTO products (
     category_id, name, slug, description, base_price, 
@@ -291,6 +328,66 @@ func (q *Queries) FindUserByID(ctx context.Context, id pgtype.UUID) (FindUserByI
 	return i, err
 }
 
+const listCartItems = `-- name: ListCartItems :many
+SELECT 
+    ci.id, ci.cart_id, ci.product_id, ci.product_variant_id, ci.quantity, ci.created_at, ci.updated_at,
+    p.name as product_name, p.slug as product_slug, p.base_price as product_price,
+    pv.variant_name, pv.price_extra as variant_price_extra
+FROM cart_items ci
+JOIN products p ON p.id = ci.product_id
+LEFT JOIN product_variants pv ON pv.id = ci.product_variant_id
+WHERE ci.cart_id = $1
+ORDER BY ci.created_at ASC
+`
+
+type ListCartItemsRow struct {
+	ID                pgtype.UUID        `json:"id"`
+	CartID            pgtype.UUID        `json:"cart_id"`
+	ProductID         int64              `json:"product_id"`
+	ProductVariantID  pgtype.Int8        `json:"product_variant_id"`
+	Quantity          int32              `json:"quantity"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	ProductName       string             `json:"product_name"`
+	ProductSlug       string             `json:"product_slug"`
+	ProductPrice      pgtype.Numeric     `json:"product_price"`
+	VariantName       pgtype.Text        `json:"variant_name"`
+	VariantPriceExtra pgtype.Numeric     `json:"variant_price_extra"`
+}
+
+func (q *Queries) ListCartItems(ctx context.Context, cartID pgtype.UUID) ([]ListCartItemsRow, error) {
+	rows, err := q.db.Query(ctx, listCartItems, cartID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListCartItemsRow
+	for rows.Next() {
+		var i ListCartItemsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CartID,
+			&i.ProductID,
+			&i.ProductVariantID,
+			&i.Quantity,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ProductName,
+			&i.ProductSlug,
+			&i.ProductPrice,
+			&i.VariantName,
+			&i.VariantPriceExtra,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCarts = `-- name: ListCarts :many
 SELECT id, user_id, created_at, updated_at
 FROM carts
@@ -531,4 +628,41 @@ func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const removeItemFromCart = `-- name: RemoveItemFromCart :exec
+DELETE FROM cart_items
+WHERE id = $1
+`
+
+func (q *Queries) RemoveItemFromCart(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, removeItemFromCart, id)
+	return err
+}
+
+const updateItemQuantity = `-- name: UpdateItemQuantity :one
+UPDATE cart_items
+SET quantity = $2, updated_at = NOW()
+WHERE id = $1
+RETURNING id, cart_id, product_id, product_variant_id, quantity, created_at, updated_at
+`
+
+type UpdateItemQuantityParams struct {
+	ID       pgtype.UUID `json:"id"`
+	Quantity int32       `json:"quantity"`
+}
+
+func (q *Queries) UpdateItemQuantity(ctx context.Context, arg UpdateItemQuantityParams) (CartItem, error) {
+	row := q.db.QueryRow(ctx, updateItemQuantity, arg.ID, arg.Quantity)
+	var i CartItem
+	err := row.Scan(
+		&i.ID,
+		&i.CartID,
+		&i.ProductID,
+		&i.ProductVariantID,
+		&i.Quantity,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

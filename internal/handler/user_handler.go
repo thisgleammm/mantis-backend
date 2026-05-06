@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/thisgleammm/mantis-backend/internal/auth"
+	"github.com/thisgleammm/mantis-backend/internal/middleware"
 	"github.com/thisgleammm/mantis-backend/internal/json"
 	"github.com/thisgleammm/mantis-backend/internal/service"
 )
@@ -37,7 +37,7 @@ func (h *UserHandler) FindUserByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(auth.UserIDKey).(string)
+	userID := r.Context().Value(middleware.UserIDKey).(string)
 	user, err := h.svc.FindUserByID(r.Context(), userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)

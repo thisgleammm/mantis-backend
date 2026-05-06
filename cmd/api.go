@@ -6,14 +6,14 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/httprate"
 	"github.com/jackc/pgx/v5/pgxpool"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	_ "github.com/thisgleammm/mantis-backend/cmd/docs"
 	repo "github.com/thisgleammm/mantis-backend/internal/adapters/postgresql/sqlc"
-	"github.com/thisgleammm/mantis-backend/internal/auth"
+	"github.com/thisgleammm/mantis-backend/internal/middleware"
 	"github.com/thisgleammm/mantis-backend/internal/env"
 	"github.com/thisgleammm/mantis-backend/internal/handler"
 	"github.com/thisgleammm/mantis-backend/internal/repository/postgresql"
@@ -34,20 +34,20 @@ func (app *application) mount() http.Handler {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
-	r.Use(middleware.RequestID) // important for rate limiting
-	r.Use(middleware.RealIP)    // impor for rate limiting and analytics and tracing
-	r.Use(middleware.Logger)    // logging requests
-	r.Use(middleware.Recoverer) // recover from panics
-	r.Use(auth.SecurityHeaders) // security headers
+	r.Use(chiMiddleware.RequestID) // important for rate limiting
+	r.Use(chiMiddleware.RealIP)    // impor for rate limiting and analytics and tracing
+	r.Use(chiMiddleware.Logger)    // logging requests
+	r.Use(chiMiddleware.Recoverer) // recover from panics
+	r.Use(middleware.SecurityHeaders) // security headers
 
-	r.Use(middleware.Timeout(60 * time.Second)) // timeout for requests
+	r.Use(chiMiddleware.Timeout(60 * time.Second)) // timeout for requests
 
 	// Routes
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("all good"))
 	})
 
-	r.With(auth.RelaxedSecurityHeaders).Get("/swagger/*", httpSwagger.Handler(
+	r.With(middleware.RelaxedSecurityHeaders).Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"), //The url pointing to API definition
 	))
 
@@ -90,11 +90,11 @@ func (app *application) mount() http.Handler {
 		r.Route("/users", func(r chi.Router) {
 			r.Get("/", userHandler.ListUsers)
 			r.Get("/{id}", userHandler.FindUserByID)
-			r.With(auth.Middleware).Get("/me", userHandler.GetMe)
+			r.With(middleware.Middleware).Get("/me", userHandler.GetMe)
 		})
 
 		r.Route("/carts", func(r chi.Router) {
-			r.Use(auth.Middleware)
+			r.Use(middleware.Middleware)
 			r.Get("/", cartHandler.ListCarts)
 			r.Route("/{id}", func(r chi.Router) {
 				r.Get("/items", cartHandler.ListCartItems)

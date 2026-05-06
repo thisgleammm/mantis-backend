@@ -74,7 +74,7 @@ ORDER BY created_at DESC;
 
 -- name: ListProductImages :many
 SELECT id, image_url, sort_order
-FROM products_images
+FROM product_images
 WHERE product_id = $1
 ORDER BY sort_order ASC;
 

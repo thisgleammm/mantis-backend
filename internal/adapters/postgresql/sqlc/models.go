@@ -5,8 +5,56 @@
 package repo
 
 import (
+	"database/sql/driver"
+	"fmt"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type OrderStatus string
+
+const (
+	OrderStatusPending    OrderStatus = "pending"
+	OrderStatusProcessing OrderStatus = "processing"
+	OrderStatusShipped    OrderStatus = "shipped"
+	OrderStatusDelivered  OrderStatus = "delivered"
+	OrderStatusCancelled  OrderStatus = "cancelled"
+)
+
+func (e *OrderStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = OrderStatus(s)
+	case string:
+		*e = OrderStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for OrderStatus: %T", src)
+	}
+	return nil
+}
+
+type NullOrderStatus struct {
+	OrderStatus OrderStatus `json:"order_status"`
+	Valid       bool        `json:"valid"` // Valid is true if OrderStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullOrderStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.OrderStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.OrderStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullOrderStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.OrderStatus), nil
+}
 
 type Address struct {
 	ID            pgtype.UUID        `json:"id"`
@@ -44,6 +92,21 @@ type Category struct {
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 }
 
+type Order struct {
+	ID              pgtype.UUID        `json:"id"`
+	UserID          pgtype.UUID        `json:"user_id"`
+	InvoiceNumber   string             `json:"invoice_number"`
+	Status          OrderStatus        `json:"status"`
+	TotalAmount     pgtype.Numeric     `json:"total_amount"`
+	ShippingCost    pgtype.Numeric     `json:"shipping_cost"`
+	GrandTotal      pgtype.Numeric     `json:"grand_total"`
+	ShippingAddress string             `json:"shipping_address"`
+	TrackingNumber  pgtype.Text        `json:"tracking_number"`
+	CourierName     pgtype.Text        `json:"courier_name"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Product struct {
 	ID             int64              `json:"id"`
 	CategoryID     pgtype.Int8        `json:"category_id"`
@@ -61,6 +124,15 @@ type Product struct {
 	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
 }
 
+type ProductImage struct {
+	ID        int64              `json:"id"`
+	ProductID int64              `json:"product_id"`
+	ImageUrl  string             `json:"image_url"`
+	SortOrder int32              `json:"sort_order"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
 type ProductVariant struct {
 	ID               int64              `json:"id"`
 	ProductID        int64              `json:"product_id"`
@@ -71,15 +143,6 @@ type ProductVariant struct {
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
-}
-
-type ProductsImage struct {
-	ID        int64              `json:"id"`
-	ProductID int64              `json:"product_id"`
-	ImageUrl  string             `json:"image_url"`
-	SortOrder int32              `json:"sort_order"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 type User struct {

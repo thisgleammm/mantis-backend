@@ -361,7 +361,7 @@ func (q *Queries) ListCategories(ctx context.Context) ([]Category, error) {
 
 const listProductImages = `-- name: ListProductImages :many
 SELECT id, image_url, sort_order
-FROM products_images
+FROM product_images
 WHERE product_id = $1
 ORDER BY sort_order ASC
 `

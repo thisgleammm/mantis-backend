@@ -14,10 +14,10 @@ import (
 	_ "github.com/thisgleammm/mantis-backend/cmd/docs"
 	repo "github.com/thisgleammm/mantis-backend/internal/adapters/postgresql/sqlc"
 	"github.com/thisgleammm/mantis-backend/internal/auth"
-	"github.com/thisgleammm/mantis-backend/internal/carts"
-	"github.com/thisgleammm/mantis-backend/internal/categories"
-	"github.com/thisgleammm/mantis-backend/internal/products"
-	"github.com/thisgleammm/mantis-backend/internal/users"
+	"github.com/thisgleammm/mantis-backend/internal/env"
+	"github.com/thisgleammm/mantis-backend/internal/handler"
+	"github.com/thisgleammm/mantis-backend/internal/repository/postgresql"
+	"github.com/thisgleammm/mantis-backend/internal/service"
 )
 
 // mount
@@ -51,20 +51,27 @@ func (app *application) mount() http.Handler {
 		httpSwagger.URL("/swagger/doc.json"), //The url pointing to API definition
 	))
 
-	productService := products.NewService(repo.New(app.db))
-	productHandler := products.NewHandler(productService)
+	queries := repo.New(app.db)
+	jwtSecret := env.RequiredString("JWT_SECRET")
 
-	categoriesService := categories.NewService(repo.New(app.db))
-	categoriesHandler := categories.NewHandler(categoriesService)
+	productRepo := postgresql.NewProductRepository(queries)
+	productService := service.NewProductService(productRepo)
+	productHandler := handler.NewProductHandler(productService)
 
-	userService := users.NewService(repo.New(app.db))
-	userHandler := users.NewHandler(userService)
+	categoryRepo := postgresql.NewCategoryRepository(queries)
+	categoryService := service.NewCategoryService(categoryRepo)
+	categoryHandler := handler.NewCategoryHandler(categoryService)
 
-	authService := auth.NewService(repo.New(app.db))
-	authHandler := auth.NewHandler(authService)
+	userRepo := postgresql.NewUserRepository(queries)
+	userService := service.NewUserService(userRepo)
+	userHandler := handler.NewUserHandler(userService)
 
-	cartsService := carts.NewService(repo.New(app.db))
-	cartsHandler := carts.NewHandler(cartsService)
+	authService := service.NewAuthService(userRepo, jwtSecret)
+	authHandler := handler.NewAuthHandler(authService)
+
+	cartRepo := postgresql.NewCartRepository(queries)
+	cartService := service.NewCartService(cartRepo)
+	cartHandler := handler.NewCartHandler(cartService)
 
 	// API v1 Routing
 	r.Route("/api/v1", func(r chi.Router) {
@@ -76,8 +83,8 @@ func (app *application) mount() http.Handler {
 		})
 
 		r.Route("/categories", func(r chi.Router) {
-			r.Get("/", categoriesHandler.ListCategories)
-			r.Get("/{id}", categoriesHandler.FindCategoryByID)
+			r.Get("/", categoryHandler.ListCategories)
+			r.Get("/{id}", categoryHandler.FindCategoryByID)
 		})
 
 		r.Route("/users", func(r chi.Router) {
@@ -88,14 +95,14 @@ func (app *application) mount() http.Handler {
 
 		r.Route("/carts", func(r chi.Router) {
 			r.Use(auth.Middleware)
-			r.Get("/", cartsHandler.ListCarts)
+			r.Get("/", cartHandler.ListCarts)
 			r.Route("/{id}", func(r chi.Router) {
-				r.Get("/items", cartsHandler.ListCartItems)
-				r.Post("/items", cartsHandler.AddItemToCart)
+				r.Get("/items", cartHandler.ListCartItems)
+				r.Post("/items", cartHandler.AddItemToCart)
 			})
 			r.Route("/items", func(r chi.Router) {
-				r.Patch("/{id}", cartsHandler.UpdateItemQuantity)
-				r.Delete("/{id}", cartsHandler.RemoveItemFromCart)
+				r.Patch("/{id}", cartHandler.UpdateItemQuantity)
+				r.Delete("/{id}", cartHandler.RemoveItemFromCart)
 			})
 		})
 

@@ -15,13 +15,20 @@ func NewHandler(service Service) *handler {
 	return &handler{service: service}
 }
 
+type cartResponse struct {
+	ID        string `json:"id"`
+	UserID    string `json:"user_id"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
 // ListCarts godoc
 // @Summary List all carts
 // @Description Get a list of all carts
 // @Tags carts
 // @Accept  json
 // @Produce  json
-// @Success 200 {array} repo.Cart
+// @Success 200 {array} cartResponse
 // @Router /carts [get]
 func (h *handler) ListCarts(w http.ResponseWriter, r *http.Request) {
 	carts, err := h.service.ListCarts(r.Context())

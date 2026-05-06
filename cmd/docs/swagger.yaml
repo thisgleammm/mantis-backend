@@ -20,19 +20,14 @@ definitions:
       username:
         type: string
     type: object
-  auth.loginResponse:
-    properties:
-      token:
-        type: string
-    type: object
-  auth.registerResponse:
+  auth.userResponse:
     properties:
       created_at:
         type: string
       email:
         type: string
       id:
-        type: integer
+        type: string
       name:
         type: string
       phone_number:
@@ -91,50 +86,6 @@ definitions:
       weight:
         type: number
     type: object
-  products.imageResponse:
-    properties:
-      id:
-        type: integer
-      image_url:
-        type: string
-      sort_order:
-        type: integer
-    type: object
-  products.productDetailResponse:
-    properties:
-      base_price:
-        type: number
-      category_id:
-        type: integer
-      created_at:
-        type: string
-      description:
-        type: string
-      discount_price:
-        type: number
-      id:
-        type: integer
-      images:
-        items:
-          $ref: '#/definitions/products.imageResponse'
-        type: array
-      name:
-        type: string
-      rating_average:
-        type: number
-      rating_count:
-        type: integer
-      slug:
-        type: string
-      updated_at:
-        type: string
-      variants:
-        items:
-          $ref: '#/definitions/products.variantResponse'
-        type: array
-      weight:
-        type: number
-    type: object
   products.productResponse:
     properties:
       base_price:
@@ -162,19 +113,6 @@ definitions:
       weight:
         type: number
     type: object
-  products.variantResponse:
-    properties:
-      id:
-        type: integer
-      price_extra:
-        type: number
-      stock:
-        type: integer
-      stock_keeping_unit:
-        type: string
-      variant_name:
-        type: string
-    type: object
   users.userResponse:
     properties:
       created_at:
@@ -182,7 +120,7 @@ definitions:
       email:
         type: string
       id:
-        type: integer
+        type: string
       name:
         type: string
       phone_number:
@@ -222,7 +160,9 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/auth.loginResponse'
+            additionalProperties:
+              type: string
+            type: object
         "400":
           description: invalid request body or validation error
           schema:
@@ -265,7 +205,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/auth.registerResponse'
+            $ref: '#/definitions/auth.userResponse'
         "400":
           description: invalid request body or validation error
           schema:
@@ -273,6 +213,23 @@ paths:
       summary: Register a new user
       tags:
       - auth
+  /carts:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all carts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/carts.cartResponse'
+            type: array
+      summary: List all carts
+      tags:
+      - carts
   /categories:
     get:
       consumes:
@@ -319,23 +276,6 @@ paths:
       summary: Find category by ID
       tags:
       - categories
-  /carts:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of all carts
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/carts.cartResponse'
-            type: array
-      summary: List all carts
-      tags:
-      - carts
   /products:
     get:
       consumes:
@@ -439,7 +379,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/products.productDetailResponse'
+            $ref: '#/definitions/products.productResponse'
         "400":
           description: invalid product slug
           schema:
@@ -478,7 +418,7 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -486,10 +426,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/users.userResponse'
-        "400":
-          description: invalid user id
-          schema:
-            type: string
         "404":
           description: user not found
           schema:

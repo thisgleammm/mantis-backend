@@ -19,6 +19,15 @@ func NewHandler(service Service) *handler {
 	}
 }
 
+type userResponse struct {
+	ID          string `json:"id"`
+	Username    string `json:"username"`
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	PhoneNumber string `json:"phone_number"`
+	CreatedAt   string `json:"created_at"`
+}
+
 // ListUsers godoc
 // @Summary List all users
 // @Description Get a list of all users

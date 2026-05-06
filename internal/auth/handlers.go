@@ -25,6 +25,15 @@ func NewHandler(service Service) *handler {
 	return &handler{service: service}
 }
 
+type userResponse struct {
+	ID          string `json:"id"`
+	Username    string `json:"username"`
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	PhoneNumber string `json:"phone_number"`
+	CreatedAt   string `json:"created_at"`
+}
+
 // Register godoc
 // @Summary Register a new user
 // @Description Create a new user account
@@ -32,7 +41,7 @@ func NewHandler(service Service) *handler {
 // @Accept  json
 // @Produce  json
 // @Param request body RegisterRequest true "Registration Info"
-// @Success 201 {object} registerResponse
+// @Success 201 {object} userResponse
 // @Failure 400 {string} string "invalid request body or validation error"
 // @Router /auth/register [post]
 func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
@@ -62,7 +71,7 @@ func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
 // @Accept  json
 // @Produce  json
 // @Param request body LoginRequest true "Login Credentials"
-// @Success 200 {object} loginResponse
+// @Success 200 {object} map[string]string
 // @Failure 400 {string} string "invalid request body or validation error"
 // @Failure 401 {string} string "unauthorized"
 // @Router /auth/login [post]

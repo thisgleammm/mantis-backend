@@ -72,8 +72,11 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Name:     "auth_token",
 		Value:    "",
 		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
 		HttpOnly: true,
+		Secure:   true,
 		Path:     "/",
+		SameSite: http.SameSiteNoneMode,
 	})
 	w.WriteHeader(http.StatusNoContent)
 }

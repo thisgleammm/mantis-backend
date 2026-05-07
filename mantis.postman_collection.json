@@ -97,6 +97,37 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.environment.set(\"auth_token\", \"\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"logout"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -104,10 +135,19 @@
 			"name": "Products",
 			"item": [
 				{
-					"name": "List Products",
+					"name": "Create Product",
 					"request": {
-						"method": "GET",
+						"method": "POST",
 						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"category_id\": 1,\n    \"name\": \"Sample Product\",\n    \"slug\": \"sample-product-slug\",\n    \"description\": \"A sample product description\",\n    \"base_price\": 150000,\n    \"discount_price\": 120000,\n    \"weight\": 250,\n    \"specifications\": {}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/products",
 							"host": [
@@ -117,6 +157,35 @@
 								"api",
 								"v1",
 								"products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/products?limit=20&offset=0",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"products"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "20"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
 							]
 						}
 					},
@@ -148,7 +217,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/products/sample-product",
+							"raw": "{{base_url}}/api/v1/products/sample-product-slug",
 							"host": [
 								"{{base_url}}"
 							],
@@ -156,7 +225,7 @@
 								"api",
 								"v1",
 								"products",
-								"sample-product"
+								"sample-product-slug"
 							]
 						}
 					},
@@ -236,7 +305,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/users/1",
+							"raw": "{{base_url}}/api/v1/users/:id",
 							"host": [
 								"{{base_url}}"
 							],
@@ -244,7 +313,13 @@
 								"api",
 								"v1",
 								"users",
-								"1"
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "user-uuid-here"
+								}
 							]
 						}
 					},
@@ -281,6 +356,40 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Carts",
+			"item": [
+				{
+					"name": "List Carts",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/carts",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"carts"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"event": [
@@ -306,7 +415,7 @@
 	"variable": [
 		{
 			"key": "base_url",
-			"value": "http://localhost:8080",
+			"value": "https://mantis-backend.fly.dev",
 			"type": "string"
 		},
 		{

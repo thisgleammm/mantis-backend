@@ -1,4 +1,4 @@
-package auth
+package middleware
 
 import (
 	"errors"
@@ -16,7 +16,7 @@ func init() {
 	jwtSecret = []byte(env.RequiredString("JWT_SECRET"))
 }
 
-func GenerateToken(userID int64) (string, error) {
+func GenerateToken(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"exp":     time.Now().Add(time.Hour * 72).Unix(),
@@ -25,7 +25,7 @@ func GenerateToken(userID int64) (string, error) {
 	return token.SignedString(jwtSecret)
 }
 
-func VerifyToken(tokenString string) (int64, error) {
+func VerifyToken(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		// Root cause guard: reject non-HMAC algorithms (alg:none attack)
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -34,11 +34,11 @@ func VerifyToken(tokenString string) (int64, error) {
 		return jwtSecret, nil
 	})
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		userID := int64(claims["user_id"].(float64))
+		userID := claims["user_id"].(string)
 		return userID, nil
 	}
-	return 0, errors.New("invalid token")
+	return "", errors.New("invalid token")
 }

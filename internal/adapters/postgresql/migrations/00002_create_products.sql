@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS products (
     description TEXT,
     base_price NUMERIC(12, 2) NOT NULL,
     discount_price NUMERIC(12, 2),
-    weight NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    weight INTEGER NOT NULL DEFAULT 0,
     specifications JSONB DEFAULT '{}'::jsonb,
     rating_average NUMERIC(3, 2) NOT NULL DEFAULT 0,
     rating_count INTEGER NOT NULL DEFAULT 0,

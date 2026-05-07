@@ -20,25 +20,85 @@ definitions:
       username:
         type: string
     type: object
-  auth.loginResponse:
-    properties:
-      token:
-        type: string
-    type: object
-  auth.registerResponse:
+  auth.userResponse:
     properties:
       created_at:
         type: string
       email:
         type: string
       id:
-        type: integer
+        type: string
       name:
         type: string
       phone_number:
         type: string
       username:
         type: string
+    type: object
+  carts.addItemRequest:
+    properties:
+      product_id:
+        type: integer
+      product_variant_id:
+        type: integer
+      quantity:
+        type: integer
+    type: object
+  carts.addItemResponse:
+    properties:
+      cart_id:
+        type: string
+      id:
+        type: string
+      product_id:
+        type: integer
+      product_variant_id:
+        type: integer
+      quantity:
+        type: integer
+    type: object
+  carts.cartItemResponse:
+    properties:
+      cart_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      product_id:
+        type: integer
+      product_name:
+        type: string
+      product_price:
+        type: number
+      product_slug:
+        type: string
+      product_variant_id:
+        type: integer
+      quantity:
+        type: integer
+      updated_at:
+        type: string
+      variant_name:
+        type: string
+      variant_price_extra:
+        type: number
+    type: object
+  carts.cartResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  carts.updateQuantityRequest:
+    properties:
+      quantity:
+        type: integer
     type: object
   categories.categoryResponse:
     properties:
@@ -61,6 +121,34 @@ definitions:
       updated_at:
         type: string
     type: object
+  products.createProductRequest:
+    properties:
+      base_price:
+        type: number
+      category_id:
+        type: integer
+      description:
+        type: string
+      discount_price:
+        type: number
+      name:
+        type: string
+      slug:
+        type: string
+      specifications:
+        description: Allow client to send JSON object
+      weight:
+        type: number
+    type: object
+  products.imageResponse:
+    properties:
+      id:
+        type: integer
+      image_url:
+        type: string
+      sort_order:
+        type: integer
+    type: object
   products.productResponse:
     properties:
       base_price:
@@ -75,6 +163,10 @@ definitions:
         type: number
       id:
         type: integer
+      images:
+        items:
+          $ref: '#/definitions/products.imageResponse'
+        type: array
       name:
         type: string
       rating_average:
@@ -85,8 +177,25 @@ definitions:
         type: string
       updated_at:
         type: string
+      variants:
+        items:
+          $ref: '#/definitions/products.variantResponse'
+        type: array
       weight:
         type: number
+    type: object
+  products.variantResponse:
+    properties:
+      id:
+        type: integer
+      price_extra:
+        type: number
+      stock:
+        type: integer
+      stock_keeping_unit:
+        type: string
+      variant_name:
+        type: string
     type: object
   users.userResponse:
     properties:
@@ -95,7 +204,7 @@ definitions:
       email:
         type: string
       id:
-        type: integer
+        type: string
       name:
         type: string
       phone_number:
@@ -103,7 +212,7 @@ definitions:
       username:
         type: string
     type: object
-host: localhost:8080
+host: mantis-backend.fly.dev
 info:
   contact:
     email: support@swagger.io
@@ -135,7 +244,9 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/auth.loginResponse'
+            additionalProperties:
+              type: string
+            type: object
         "400":
           description: invalid request body or validation error
           schema:
@@ -145,6 +256,19 @@ paths:
           schema:
             type: string
       summary: Login user
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Logout the current user (client-side should discard the token)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: successfully logged out
+          schema:
+            type: string
+      summary: Logout user
       tags:
       - auth
   /auth/register:
@@ -165,7 +289,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/auth.registerResponse'
+            $ref: '#/definitions/auth.userResponse'
         "400":
           description: invalid request body or validation error
           schema:
@@ -173,6 +297,127 @@ paths:
       summary: Register a new user
       tags:
       - auth
+  /carts:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of carts belonging to the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/carts.cartResponse'
+            type: array
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: List user's carts
+      tags:
+      - carts
+  /carts/{id}/items:
+    get:
+      consumes:
+      - application/json
+      description: Get all items within a specific cart
+      parameters:
+      - description: Cart ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/carts.cartItemResponse'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: List items in a cart
+      tags:
+      - carts
+    post:
+      consumes:
+      - application/json
+      description: Add a product or variant to a cart. If exists, increments quantity.
+      parameters:
+      - description: Cart ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Item Details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/carts.addItemRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/carts.addItemResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Add item to cart
+      tags:
+      - carts
+  /carts/items/{id}:
+    delete:
+      description: Delete a specific item from the cart
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - ApiKeyAuth: []
+      summary: Remove item from cart
+      tags:
+      - carts
+    patch:
+      consumes:
+      - application/json
+      description: Update the quantity of a specific item in the cart
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New Quantity
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/carts.updateQuantityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/carts.addItemResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update item quantity
+      tags:
+      - carts
   /categories:
     get:
       consumes:
@@ -224,6 +469,17 @@ paths:
       consumes:
       - application/json
       description: Get a list of all products
+      parameters:
+      - default: 20
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
@@ -234,6 +490,35 @@ paths:
               $ref: '#/definitions/products.productResponse'
             type: array
       summary: List all products
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: Create a new product with the provided details
+      parameters:
+      - description: Product details
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/products.createProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/products.productResponse'
+        "400":
+          description: invalid request payload
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Create a new product
       tags:
       - products
   /products/{id}:
@@ -321,7 +606,7 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -329,10 +614,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/users.userResponse'
-        "400":
-          description: invalid user id
-          schema:
-            type: string
         "404":
           description: user not found
           schema:

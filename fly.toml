@@ -9,7 +9,7 @@ primary_region = 'sin'
 [build]
 
 [deploy]
-  release_command = 'goose -dir ./adapters/postgresql/migrations up'
+  release_command = "./migrate up"
 
 [env]
   PORT = '8080'

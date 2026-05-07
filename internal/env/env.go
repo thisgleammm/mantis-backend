@@ -3,13 +3,17 @@ package env
 import (
 	"log"
 	"os"
+	"path/filepath"
+	"runtime"
 
 	"github.com/joho/godotenv"
 )
 
 func init() {
-	// Load .env if it exists. Ignore error if it doesn't (production might use real env vars).
-	_ = godotenv.Load()
+	// Dynamically find project root from this file's location (internal/env/env.go)
+	_, b, _, _ := runtime.Caller(0)
+	projectRoot := filepath.Join(filepath.Dir(b), "../..")
+	_ = godotenv.Load(filepath.Join(projectRoot, ".env"))
 }
 
 func GetString(key, fallback string) string {

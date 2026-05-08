@@ -17,21 +17,6 @@ func (s *ProductService) ListProducts(ctx context.Context, limit, offset int32) 
 	return s.repo.List(ctx, limit, offset)
 }
 
-func (s *ProductService) FindProductByID(ctx context.Context, id int64) (domain.Product, error) {
-	product, err := s.repo.FindByID(ctx, id)
-	if err != nil {
-		return domain.Product{}, err
-	}
-
-	images, _ := s.repo.ListImages(ctx, product.ID)
-	variants, _ := s.repo.ListVariants(ctx, product.ID)
-
-	product.Images = images
-	product.Variants = variants
-
-	return product, nil
-}
-
 func (s *ProductService) FindProductBySlug(ctx context.Context, slug string) (domain.Product, error) {
 	product, err := s.repo.FindBySlug(ctx, slug)
 	if err != nil {

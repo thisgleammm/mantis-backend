@@ -117,6 +117,18 @@ type Order struct {
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 }
 
+type OrderItem struct {
+	ID               pgtype.UUID        `json:"id"`
+	OrderID          pgtype.UUID        `json:"order_id"`
+	ProductID        int64              `json:"product_id"`
+	ProductVariantID pgtype.Int8        `json:"product_variant_id"`
+	ProductName      string             `json:"product_name"`
+	Quantity         int32              `json:"quantity"`
+	PriceAtPurchase  pgtype.Numeric     `json:"price_at_purchase"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Product struct {
 	ID             int64              `json:"id"`
 	CategoryID     pgtype.Int8        `json:"category_id"`

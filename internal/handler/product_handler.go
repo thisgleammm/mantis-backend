@@ -43,23 +43,6 @@ func (h *ProductHandler) ListProducts(w http.ResponseWriter, r *http.Request) {
 	json.Write(w, http.StatusOK, products)
 }
 
-func (h *ProductHandler) FindProductByID(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		http.Error(w, "invalid product id", http.StatusBadRequest)
-		return
-	}
-
-	product, err := h.svc.FindProductByID(r.Context(), id)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
-
-	json.Write(w, http.StatusOK, product)
-}
-
 func (h *ProductHandler) FindProductBySlug(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 	product, err := h.svc.FindProductBySlug(r.Context(), slug)

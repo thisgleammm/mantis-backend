@@ -36,3 +36,4 @@ bin/
 tmp/
 
 .agents/*
+.commandcode/*

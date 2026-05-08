@@ -78,7 +78,6 @@ func (app *application) mount() http.Handler {
 		r.Route("/products", func(r chi.Router) {
 			r.Get("/", productHandler.ListProducts)
 			r.Post("/", productHandler.CreateProduct)
-			r.Get("/{id:[0-9]+}", productHandler.FindProductByID)
 			r.Get("/{slug}", productHandler.FindProductBySlug)
 		})
 

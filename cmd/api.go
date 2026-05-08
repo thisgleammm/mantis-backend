@@ -73,6 +73,10 @@ func (app *application) mount() http.Handler {
 	cartService := service.NewCartService(cartRepo)
 	cartHandler := handler.NewCartHandler(cartService)
 
+	orderRepo := postgresql.NewOrderRepository(queries)
+	orderService := service.NewOrderService(orderRepo, cartRepo)
+	orderHandler := handler.NewOrderHandler(orderService)
+
 	// API v1 Routing
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/products", func(r chi.Router) {
@@ -103,6 +107,12 @@ func (app *application) mount() http.Handler {
 				r.Patch("/{id}", cartHandler.UpdateItemQuantity)
 				r.Delete("/{id}", cartHandler.RemoveItemFromCart)
 			})
+		})
+
+		r.Route("/orders", func(r chi.Router) {
+			r.Use(middleware.Middleware)
+			r.Get("/", orderHandler.ListOrders)
+			r.Post("/checkout", orderHandler.Checkout)
 		})
 
 		r.Route("/auth", func(r chi.Router) {

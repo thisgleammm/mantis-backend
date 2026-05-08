@@ -23,6 +23,9 @@ import (
 
 // @host mantis-backend.fly.dev
 // @BasePath /api/v1
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 
 func main() {
 	ctx := context.Background()

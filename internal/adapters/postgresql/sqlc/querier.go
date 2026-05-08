@@ -12,6 +12,9 @@ import (
 
 type Querier interface {
 	AddItemToCart(ctx context.Context, arg AddItemToCartParams) (CartItem, error)
+	ClearCartItems(ctx context.Context, userID pgtype.UUID) error
+	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
+	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (CreateProductRow, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
 	FindCategoryByID(ctx context.Context, id int64) (Category, error)
@@ -24,6 +27,8 @@ type Querier interface {
 	ListCartItems(ctx context.Context, cartID pgtype.UUID) ([]ListCartItemsRow, error)
 	ListCarts(ctx context.Context, userID pgtype.UUID) ([]Cart, error)
 	ListCategories(ctx context.Context) ([]Category, error)
+	ListOrderItems(ctx context.Context, orderID pgtype.UUID) ([]OrderItem, error)
+	ListOrders(ctx context.Context, userID pgtype.UUID) ([]Order, error)
 	ListProductImages(ctx context.Context, productID int64) ([]ListProductImagesRow, error)
 	ListProductVariants(ctx context.Context, productID int64) ([]ListProductVariantsRow, error)
 	// Untuk daftar produk, kita tidak menarik 'description' dan 'specifications' agar payload ringan.

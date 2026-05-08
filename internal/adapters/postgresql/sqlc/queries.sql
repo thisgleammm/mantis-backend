@@ -113,3 +113,36 @@ JOIN products p ON p.id = ci.product_id
 LEFT JOIN product_variants pv ON pv.id = ci.product_variant_id
 WHERE ci.cart_id = $1
 ORDER BY ci.created_at ASC;
+
+-- name: CreateOrder :one
+INSERT INTO orders (
+    user_id, invoice_number, status, total_amount,
+    shipping_cost, grand_total, shipping_address
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7
+)
+RETURNING *;
+
+-- name: CreateOrderItem :one
+INSERT INTO order_items (
+    order_id, product_id, product_variant_id, product_name, quantity, price_at_purchase
+) VALUES (
+    $1, $2, $3, $4, $5, $6
+)
+RETURNING *;
+
+-- name: ListOrders :many
+SELECT id, user_id, invoice_number, status, total_amount, shipping_cost, grand_total, shipping_address, tracking_number, courier_name, created_at, updated_at
+FROM orders
+WHERE user_id = $1
+ORDER BY created_at DESC;
+
+-- name: ListOrderItems :many
+SELECT id, order_id, product_id, product_variant_id, product_name, quantity, price_at_purchase, created_at, updated_at
+FROM order_items
+WHERE order_id = $1
+ORDER BY created_at ASC;
+
+-- name: ClearCartItems :exec
+DELETE FROM cart_items
+WHERE cart_id IN (SELECT id FROM carts WHERE user_id = $1);

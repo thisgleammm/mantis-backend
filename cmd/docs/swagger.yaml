@@ -646,4 +646,9 @@ paths:
       summary: Get current user
       tags:
       - users
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

@@ -48,6 +48,106 @@ func (q *Queries) AddItemToCart(ctx context.Context, arg AddItemToCartParams) (C
 	return i, err
 }
 
+const clearCartItems = `-- name: ClearCartItems :exec
+DELETE FROM cart_items
+WHERE cart_id IN (SELECT id FROM carts WHERE user_id = $1)
+`
+
+func (q *Queries) ClearCartItems(ctx context.Context, userID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, clearCartItems, userID)
+	return err
+}
+
+const createOrder = `-- name: CreateOrder :one
+INSERT INTO orders (
+    user_id, invoice_number, status, total_amount,
+    shipping_cost, grand_total, shipping_address
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7
+)
+RETURNING id, user_id, invoice_number, status, total_amount, shipping_cost, grand_total, shipping_address, tracking_number, courier_name, created_at, updated_at
+`
+
+type CreateOrderParams struct {
+	UserID          pgtype.UUID    `json:"user_id"`
+	InvoiceNumber   string         `json:"invoice_number"`
+	Status          OrderStatus    `json:"status"`
+	TotalAmount     pgtype.Numeric `json:"total_amount"`
+	ShippingCost    pgtype.Numeric `json:"shipping_cost"`
+	GrandTotal      pgtype.Numeric `json:"grand_total"`
+	ShippingAddress string         `json:"shipping_address"`
+}
+
+func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
+	row := q.db.QueryRow(ctx, createOrder,
+		arg.UserID,
+		arg.InvoiceNumber,
+		arg.Status,
+		arg.TotalAmount,
+		arg.ShippingCost,
+		arg.GrandTotal,
+		arg.ShippingAddress,
+	)
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.InvoiceNumber,
+		&i.Status,
+		&i.TotalAmount,
+		&i.ShippingCost,
+		&i.GrandTotal,
+		&i.ShippingAddress,
+		&i.TrackingNumber,
+		&i.CourierName,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createOrderItem = `-- name: CreateOrderItem :one
+INSERT INTO order_items (
+    order_id, product_id, product_variant_id, product_name, quantity, price_at_purchase
+) VALUES (
+    $1, $2, $3, $4, $5, $6
+)
+RETURNING id, order_id, product_id, product_variant_id, product_name, quantity, price_at_purchase, created_at, updated_at
+`
+
+type CreateOrderItemParams struct {
+	OrderID          pgtype.UUID    `json:"order_id"`
+	ProductID        int64          `json:"product_id"`
+	ProductVariantID pgtype.Int8    `json:"product_variant_id"`
+	ProductName      string         `json:"product_name"`
+	Quantity         int32          `json:"quantity"`
+	PriceAtPurchase  pgtype.Numeric `json:"price_at_purchase"`
+}
+
+func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error) {
+	row := q.db.QueryRow(ctx, createOrderItem,
+		arg.OrderID,
+		arg.ProductID,
+		arg.ProductVariantID,
+		arg.ProductName,
+		arg.Quantity,
+		arg.PriceAtPurchase,
+	)
+	var i OrderItem
+	err := row.Scan(
+		&i.ID,
+		&i.OrderID,
+		&i.ProductID,
+		&i.ProductVariantID,
+		&i.ProductName,
+		&i.Quantity,
+		&i.PriceAtPurchase,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createProduct = `-- name: CreateProduct :one
 INSERT INTO products (
     category_id, name, slug, description, base_price, 
@@ -444,6 +544,83 @@ func (q *Queries) ListCategories(ctx context.Context) ([]Category, error) {
 			&i.IconImageUrl,
 			&i.BannerImageUrl,
 			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listOrderItems = `-- name: ListOrderItems :many
+SELECT id, order_id, product_id, product_variant_id, product_name, quantity, price_at_purchase, created_at, updated_at
+FROM order_items
+WHERE order_id = $1
+ORDER BY created_at ASC
+`
+
+func (q *Queries) ListOrderItems(ctx context.Context, orderID pgtype.UUID) ([]OrderItem, error) {
+	rows, err := q.db.Query(ctx, listOrderItems, orderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []OrderItem
+	for rows.Next() {
+		var i OrderItem
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrderID,
+			&i.ProductID,
+			&i.ProductVariantID,
+			&i.ProductName,
+			&i.Quantity,
+			&i.PriceAtPurchase,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listOrders = `-- name: ListOrders :many
+SELECT id, user_id, invoice_number, status, total_amount, shipping_cost, grand_total, shipping_address, tracking_number, courier_name, created_at, updated_at
+FROM orders
+WHERE user_id = $1
+ORDER BY created_at DESC
+`
+
+func (q *Queries) ListOrders(ctx context.Context, userID pgtype.UUID) ([]Order, error) {
+	rows, err := q.db.Query(ctx, listOrders, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Order
+	for rows.Next() {
+		var i Order
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.InvoiceNumber,
+			&i.Status,
+			&i.TotalAmount,
+			&i.ShippingCost,
+			&i.GrandTotal,
+			&i.ShippingAddress,
+			&i.TrackingNumber,
+			&i.CourierName,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

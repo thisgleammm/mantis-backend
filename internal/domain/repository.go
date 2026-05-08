@@ -31,6 +31,10 @@ type CartRepository interface {
 	RemoveItem(ctx context.Context, itemID string) error
 }
 
-type AuthRepository interface {
-	// Auth specific DB ops if any
+type OrderRepository interface {
+	Create(ctx context.Context, order Order) (Order, error)
+	CreateItem(ctx context.Context, item OrderItem) error
+	ListByUserID(ctx context.Context, userID string) ([]Order, error)
+	ListItems(ctx context.Context, orderID string) ([]OrderItem, error)
+	ClearCart(ctx context.Context, userID string) error
 }

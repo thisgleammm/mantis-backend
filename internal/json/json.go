@@ -2,8 +2,13 @@ package json
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+
+	"github.com/go-playground/validator/v10"
 )
+
+var Validate = validator.New(validator.WithRequiredStructEnabled())
 
 func Write(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
@@ -18,5 +23,18 @@ func Read(w http.ResponseWriter, r *http.Request, data any) error {
 
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
-	return decoder.Decode(data)
+	if err := decoder.Decode(data); err != nil {
+		return err
+	}
+
+	err := Validate.Struct(data)
+	if err != nil {
+		var invalidValidationError *validator.InvalidValidationError
+		if errors.As(err, &invalidValidationError) {
+			return nil
+		}
+		return err
+	}
+
+	return nil
 }

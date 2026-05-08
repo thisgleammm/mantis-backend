@@ -28,7 +28,7 @@ func Middleware(next http.Handler) http.Handler {
 
 		// Fallback to cookie if header is missing or invalid
 		if tokenString == "" {
-			cookie, err := r.Cookie("token")
+			cookie, err := r.Cookie("auth_token")
 			if err == nil {
 				tokenString = cookie.Value
 			}

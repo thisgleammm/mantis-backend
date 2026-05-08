@@ -37,6 +37,9 @@ func VerifyToken(tokenString string) (string, error) {
 		return "", err
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		if claims["type"] != nil && claims["type"] != "access" {
+			return "", errors.New("invalid token type")
+		}
 		userID := claims["user_id"].(string)
 		return userID, nil
 	}

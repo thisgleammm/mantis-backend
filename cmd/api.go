@@ -13,9 +13,9 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	_ "github.com/thisgleammm/mantis-backend/cmd/docs"
 	repo "github.com/thisgleammm/mantis-backend/internal/adapters/postgresql/sqlc"
-	"github.com/thisgleammm/mantis-backend/internal/middleware"
 	"github.com/thisgleammm/mantis-backend/internal/env"
 	"github.com/thisgleammm/mantis-backend/internal/handler"
+	"github.com/thisgleammm/mantis-backend/internal/middleware"
 	"github.com/thisgleammm/mantis-backend/internal/repository/postgresql"
 	"github.com/thisgleammm/mantis-backend/internal/service"
 )
@@ -34,10 +34,10 @@ func (app *application) mount() http.Handler {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
-	r.Use(chiMiddleware.RequestID) // important for rate limiting
-	r.Use(chiMiddleware.RealIP)    // impor for rate limiting and analytics and tracing
-	r.Use(chiMiddleware.Logger)    // logging requests
-	r.Use(chiMiddleware.Recoverer) // recover from panics
+	r.Use(chiMiddleware.RequestID)    // important for rate limiting
+	r.Use(chiMiddleware.RealIP)       // impor for rate limiting and analytics and tracing
+	r.Use(chiMiddleware.Logger)       // logging requests
+	r.Use(chiMiddleware.Recoverer)    // recover from panics
 	r.Use(middleware.SecurityHeaders) // security headers
 
 	r.Use(chiMiddleware.Timeout(60 * time.Second)) // timeout for requests
@@ -119,6 +119,7 @@ func (app *application) mount() http.Handler {
 			r.Use(httprate.LimitByIP(5, 1*time.Minute)) // rate limit auth attempts
 			r.Post("/register", authHandler.Register)
 			r.Post("/login", authHandler.Login)
+			r.Post("/refresh", authHandler.Refresh)
 			r.Post("/logout", authHandler.Logout)
 		})
 

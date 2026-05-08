@@ -25,21 +25,84 @@ func (s *AuthService) Register(ctx context.Context, u domain.User) (domain.User,
 	return s.userRepo.Create(ctx, u)
 }
 
-func (s *AuthService) Login(ctx context.Context, email, password string) (domain.User, string, error) {
+func (s *AuthService) Login(ctx context.Context, email, password string) (domain.User, string, string, error) {
 	user, err := s.userRepo.FindByEmail(ctx, email)
 	if err != nil {
-		return domain.User{}, "", errors.New("invalid credentials")
+		return domain.User{}, "", "", errors.New("invalid credentials")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return domain.User{}, "", errors.New("invalid credentials")
+		return domain.User{}, "", "", errors.New("invalid credentials")
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+	now := time.Now()
+	accessClaims := jwt.MapClaims{
 		"user_id": user.ID,
-		"exp":     time.Now().Add(time.Hour * 72).Unix(),
-	})
+		"type":    "access",
+		"iss":     "mantis-api",
+		"aud":     "mantis-client",
+		"nbf":     now.Unix(),
+		"exp":     now.Add(15 * time.Minute).Unix(),
+	}
+	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString([]byte(s.secret))
+	if err != nil {
+		return domain.User{}, "", "", err
+	}
 
-	tokenString, err := token.SignedString([]byte(s.secret))
-	return user, tokenString, err
+	refreshClaims := jwt.MapClaims{
+		"user_id": user.ID,
+		"type":    "refresh",
+		"iss":     "mantis-api",
+		"aud":     "mantis-client",
+		"nbf":     now.Unix(),
+		"exp":     now.Add(7 * 24 * time.Hour).Unix(),
+	}
+	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(s.secret))
+
+	return user, accessToken, refreshToken, err
+}
+
+func (s *AuthService) RefreshToken(ctx context.Context, refreshTokenString string) (string, string, error) {
+	token, err := jwt.Parse(refreshTokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
+		return []byte(s.secret), nil
+	})
+	if err != nil {
+		return "", "", err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid || claims["type"] != "refresh" {
+		return "", "", errors.New("invalid refresh token")
+	}
+
+	userID := claims["user_id"].(string)
+	now := time.Now()
+
+	accessClaims := jwt.MapClaims{
+		"user_id": userID,
+		"type":    "access",
+		"iss":     "mantis-api",
+		"aud":     "mantis-client",
+		"nbf":     now.Unix(),
+		"exp":     now.Add(15 * time.Minute).Unix(),
+	}
+	newAccessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString([]byte(s.secret))
+	if err != nil {
+		return "", "", err
+	}
+
+	refreshClaims := jwt.MapClaims{
+		"user_id": userID,
+		"type":    "refresh",
+		"iss":     "mantis-api",
+		"aud":     "mantis-client",
+		"nbf":     now.Unix(),
+		"exp":     now.Add(7 * 24 * time.Hour).Unix(),
+	}
+	newRefreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(s.secret))
+
+	return newAccessToken, newRefreshToken, err
 }

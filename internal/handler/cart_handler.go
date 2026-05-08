@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/thisgleammm/mantis-backend/internal/middleware"
 	"github.com/thisgleammm/mantis-backend/internal/domain"
 	"github.com/thisgleammm/mantis-backend/internal/json"
+	"github.com/thisgleammm/mantis-backend/internal/middleware"
 	"github.com/thisgleammm/mantis-backend/internal/service"
 )
 

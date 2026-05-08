@@ -99,6 +99,26 @@
 					"response": []
 				},
 				{
+					"name": "Refresh",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/refresh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"refresh"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Logout",
 					"event": [
 						{

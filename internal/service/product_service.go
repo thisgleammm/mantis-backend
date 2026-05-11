@@ -14,7 +14,17 @@ func NewProductService(repo domain.ProductRepository) *ProductService {
 }
 
 func (s *ProductService) ListProducts(ctx context.Context, limit, offset int32) ([]domain.Product, error) {
-	return s.repo.List(ctx, limit, offset)
+	products, err := s.repo.List(ctx, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range products {
+		images, _ := s.repo.ListImages(ctx, products[i].ID)
+		products[i].Images = images
+	}
+
+	return products, nil
 }
 
 func (s *ProductService) FindProductBySlug(ctx context.Context, slug string) (domain.Product, error) {

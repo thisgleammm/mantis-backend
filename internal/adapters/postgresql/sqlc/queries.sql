@@ -167,5 +167,5 @@ WHERE email = $1;
 
 -- name: UpdateUserPassword :exec
 UPDATE users
-SET password = $2, updated_at = NOW()
+SET password = $2
 WHERE email = $1;

@@ -19,7 +19,7 @@ func NewOrderHandler(svc *service.OrderService) *OrderHandler {
 func (h *OrderHandler) Checkout(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		json.WriteError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
@@ -27,17 +27,17 @@ func (h *OrderHandler) Checkout(w http.ResponseWriter, r *http.Request) {
 		ShippingAddress string `json:"shipping_address"`
 	}
 	if err := json.Read(w, r, &req); err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		json.WriteError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 	if req.ShippingAddress == "" {
-		http.Error(w, "shipping_address is required", http.StatusBadRequest)
+		json.WriteError(w, http.StatusBadRequest, "shipping_address is required")
 		return
 	}
 
 	order, err := h.svc.Checkout(r.Context(), userID, req.ShippingAddress)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		json.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -49,7 +49,7 @@ func (h *OrderHandler) ListOrders(w http.ResponseWriter, r *http.Request) {
 
 	orders, err := h.svc.ListOrders(r.Context(), userID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		json.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 

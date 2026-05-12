@@ -36,13 +36,13 @@ type loginRequest struct {
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 	if err := json.Read(w, r, &req); err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		json.WriteError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 
 	user, accessToken, refreshToken, err := h.svc.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		json.WriteError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 
@@ -93,7 +93,7 @@ type registerRequest struct {
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req registerRequest
 	if err := json.Read(w, r, &req); err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		json.WriteError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 
@@ -107,7 +107,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	created, err := h.svc.Register(r.Context(), user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		json.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -125,13 +125,13 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("refresh_token")
 	if err != nil {
-		http.Error(w, "missing refresh token", http.StatusUnauthorized)
+		json.WriteError(w, http.StatusUnauthorized, "missing refresh token")
 		return
 	}
 
 	accessToken, refreshToken, err := h.svc.RefreshToken(r.Context(), cookie.Value)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		json.WriteError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 
@@ -206,12 +206,12 @@ type forgotPasswordRequest struct {
 func (h *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	var req forgotPasswordRequest
 	if err := json.Read(w, r, &req); err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		json.WriteError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 
 	if err := h.svc.ForgotPassword(r.Context(), req.Email); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		json.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -236,12 +236,12 @@ type resetPasswordRequest struct {
 func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var req resetPasswordRequest
 	if err := json.Read(w, r, &req); err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		json.WriteError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 
 	if err := h.svc.ResetPassword(r.Context(), req.Token, req.Password); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		json.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -266,18 +266,18 @@ type confirmPasswordRequest struct {
 func (h *AuthHandler) ConfirmPassword(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		json.WriteError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
 	var req confirmPasswordRequest
 	if err := json.Read(w, r, &req); err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		json.WriteError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 
 	if err := h.svc.ConfirmPassword(r.Context(), userID, req.Password); err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		json.WriteError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 

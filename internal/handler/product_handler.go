@@ -36,7 +36,7 @@ func (h *ProductHandler) ListProducts(w http.ResponseWriter, r *http.Request) {
 	products, err := h.svc.ListProducts(r.Context(), int32(limit), int32(offset))
 	if err != nil {
 		slog.Error("ListProducts failed", "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		json.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -47,7 +47,7 @@ func (h *ProductHandler) FindProductBySlug(w http.ResponseWriter, r *http.Reques
 	slug := chi.URLParam(r, "slug")
 	product, err := h.svc.FindProductBySlug(r.Context(), slug)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		json.WriteError(w, http.StatusNotFound, err.Error())
 		return
 	}
 
@@ -57,13 +57,13 @@ func (h *ProductHandler) FindProductBySlug(w http.ResponseWriter, r *http.Reques
 func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	var p domain.Product
 	if err := json.Read(w, r, &p); err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		json.WriteError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
 
 	created, err := h.svc.CreateProduct(r.Context(), p)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		json.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 

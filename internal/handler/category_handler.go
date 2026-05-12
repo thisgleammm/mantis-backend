@@ -20,7 +20,7 @@ func NewCategoryHandler(svc *service.CategoryService) *CategoryHandler {
 func (h *CategoryHandler) ListCategories(w http.ResponseWriter, r *http.Request) {
 	categories, err := h.svc.ListCategories(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		json.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	json.Write(w, http.StatusOK, categories)
@@ -30,12 +30,12 @@ func (h *CategoryHandler) FindCategoryByID(w http.ResponseWriter, r *http.Reques
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		http.Error(w, "invalid category id", http.StatusBadRequest)
+		json.WriteError(w, http.StatusBadRequest, "invalid category id")
 		return
 	}
 	category, err := h.svc.FindCategoryByID(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		json.WriteError(w, http.StatusNotFound, err.Error())
 		return
 	}
 	json.Write(w, http.StatusOK, category)

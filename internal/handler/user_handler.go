@@ -20,7 +20,7 @@ func NewUserHandler(svc *service.UserService) *UserHandler {
 func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := h.svc.ListUsers(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		json.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	json.Write(w, http.StatusOK, users)
@@ -30,7 +30,7 @@ func (h *UserHandler) FindUserByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	user, err := h.svc.FindUserByID(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		json.WriteError(w, http.StatusNotFound, err.Error())
 		return
 	}
 	json.Write(w, http.StatusOK, user)
@@ -39,12 +39,12 @@ func (h *UserHandler) FindUserByID(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		json.WriteError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	user, err := h.svc.FindUserByID(r.Context(), userID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		json.WriteError(w, http.StatusNotFound, err.Error())
 		return
 	}
 	json.Write(w, http.StatusOK, user)

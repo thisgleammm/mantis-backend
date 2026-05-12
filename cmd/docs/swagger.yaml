@@ -1,5 +1,194 @@
 basePath: /api/v1
 definitions:
+  domain.Cart:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/domain.CartItem'
+        type: array
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  domain.CartItem:
+    properties:
+      cart_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      product_id:
+        type: integer
+      product_image:
+        type: string
+      product_name:
+        type: string
+      product_price:
+        type: number
+      product_slug:
+        type: string
+      product_variant_id:
+        type: integer
+      quantity:
+        type: integer
+      updated_at:
+        type: string
+      variant_name:
+        type: string
+      variant_price_extra:
+        type: number
+    type: object
+  domain.Category:
+    properties:
+      banner_image_url:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      icon_image_url:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      slug:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  domain.Order:
+    properties:
+      courier_name:
+        type: string
+      created_at:
+        type: string
+      grand_total:
+        type: number
+      id:
+        type: string
+      invoice_number:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/domain.OrderItem'
+        type: array
+      shipping_address:
+        type: string
+      shipping_cost:
+        type: number
+      status:
+        $ref: '#/definitions/domain.OrderStatus'
+      total_amount:
+        type: number
+      tracking_number:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  domain.OrderItem:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      order_id:
+        type: string
+      price_at_purchase:
+        type: number
+      product_id:
+        type: integer
+      product_name:
+        type: string
+      product_variant_id:
+        type: integer
+      quantity:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  domain.OrderStatus:
+    enum:
+    - pending
+    - processing
+    - shipped
+    - delivered
+    - cancelled
+    type: string
+    x-enum-varnames:
+    - OrderStatusPending
+    - OrderStatusProcessing
+    - OrderStatusShipped
+    - OrderStatusDelivered
+    - OrderStatusCancelled
+  domain.Product:
+    properties:
+      base_price:
+        type: number
+      category_id:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      discount_price:
+        type: number
+      id:
+        type: integer
+      images:
+        items:
+          $ref: '#/definitions/domain.ProductImage'
+        type: array
+      name:
+        type: string
+      rating_average:
+        type: number
+      rating_count:
+        type: integer
+      slug:
+        type: string
+      specifications: {}
+      updated_at:
+        type: string
+      variants:
+        items:
+          $ref: '#/definitions/domain.ProductVariant'
+        type: array
+      weight:
+        type: integer
+    type: object
+  domain.ProductImage:
+    properties:
+      id:
+        type: integer
+      image_url:
+        type: string
+      sort_order:
+        type: integer
+    type: object
+  domain.ProductVariant:
+    properties:
+      id:
+        type: integer
+      price_extra:
+        type: number
+      stock:
+        type: integer
+      stock_keeping_unit:
+        type: string
+      variant_name:
+        type: string
+    type: object
   domain.User:
     properties:
       created_at:
@@ -251,6 +440,338 @@ paths:
       summary: Reset Password
       tags:
       - Auth
+  /carts:
+    get:
+      description: Get a list of all shopping carts belonging to the authenticated
+        user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Cart'
+            type: array
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: List User Carts
+      tags:
+      - Carts
+  /carts/{id}/items:
+    get:
+      description: Get all products and their quantities in a specific cart.
+      parameters:
+      - description: Cart ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.CartItem'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: List Cart Items
+      tags:
+      - Carts
+    post:
+      consumes:
+      - application/json
+      description: Add a new product or increase quantity of an existing product in
+        a cart.
+      parameters:
+      - description: Cart ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Item details
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CartItem'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.CartItem'
+      security:
+      - ApiKeyAuth: []
+      summary: Add Item to Cart
+      tags:
+      - Carts
+  /carts/items/{id}:
+    delete:
+      description: Delete a specific item from a shopping cart by its unique item
+        ID.
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - ApiKeyAuth: []
+      summary: Remove Item from Cart
+      tags:
+      - Carts
+    patch:
+      consumes:
+      - application/json
+      description: Change the quantity of a cart item by its unique item ID.
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Quantity object
+        in: body
+        name: quantity
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.CartItem'
+      security:
+      - ApiKeyAuth: []
+      summary: Update Item Quantity
+      tags:
+      - Carts
+  /categories:
+    get:
+      description: Get a list of all product categories.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Category'
+            type: array
+      summary: List Categories
+      tags:
+      - Categories
+  /categories/{id}:
+    get:
+      description: Get information about a category using its numeric ID.
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Category'
+        "400":
+          description: invalid category id
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+      summary: Get Category by ID
+      tags:
+      - Categories
+  /orders:
+    get:
+      description: Get all orders associated with the authenticated user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Order'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: List User Orders
+      tags:
+      - Orders
+  /orders/checkout:
+    post:
+      consumes:
+      - application/json
+      description: Create an order from cart items and specify a shipping address.
+      parameters:
+      - description: Shipping details
+        in: body
+        name: request
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Order'
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Checkout
+      tags:
+      - Orders
+  /products:
+    get:
+      description: Get a paginated list of products.
+      parameters:
+      - description: Limit (default 20)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset (default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Product'
+            type: array
+      summary: List Products
+      tags:
+      - Products
+    post:
+      consumes:
+      - application/json
+      description: Create a new product entry.
+      parameters:
+      - description: Product object
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Product'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Product'
+      summary: Create Product
+      tags:
+      - Products
+  /products/{slug}:
+    get:
+      description: Get detailed information about a product using its slug.
+      parameters:
+      - description: Product slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Product'
+        "404":
+          description: not found
+          schema:
+            type: string
+      summary: Get Product by Slug
+      tags:
+      - Products
+  /users:
+    get:
+      description: Get a list of all registered users.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.User'
+            type: array
+      summary: List Users
+      tags:
+      - Users
+  /users/{id}:
+    get:
+      description: Get information about a user using their unique ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.User'
+        "404":
+          description: not found
+          schema:
+            type: string
+      summary: Get User by ID
+      tags:
+      - Users
+  /users/me:
+    get:
+      description: Get the profile of the currently logged-in user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.User'
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get Current User
+      tags:
+      - Users
 securityDefinitions:
   ApiKeyAuth:
     in: header

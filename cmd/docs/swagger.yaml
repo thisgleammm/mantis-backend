@@ -1,216 +1,78 @@
 basePath: /api/v1
 definitions:
-  auth.LoginRequest:
+  domain.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      phone_number:
+        type: string
+      username:
+        type: string
+    type: object
+  handler.confirmPasswordRequest:
+    properties:
+      password:
+        type: string
+    required:
+    - password
+    type: object
+  handler.forgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  handler.loginRequest:
     properties:
       email:
         type: string
       password:
         type: string
+    required:
+    - email
+    - password
     type: object
-  auth.RegisterRequest:
+  handler.registerRequest:
     properties:
       email:
         type: string
       name:
+        maxLength: 100
+        minLength: 2
         type: string
       password:
+        minLength: 8
         type: string
       phone_number:
         type: string
       username:
+        maxLength: 30
+        minLength: 3
         type: string
+    required:
+    - email
+    - name
+    - password
+    - phone_number
+    - username
     type: object
-  auth.userResponse:
+  handler.resetPasswordRequest:
     properties:
-      created_at:
+      password:
+        minLength: 8
         type: string
-      email:
+      token:
         type: string
-      id:
-        type: string
-      name:
-        type: string
-      phone_number:
-        type: string
-      username:
-        type: string
-    type: object
-  carts.addItemRequest:
-    properties:
-      product_id:
-        type: integer
-      product_variant_id:
-        type: integer
-      quantity:
-        type: integer
-    type: object
-  carts.addItemResponse:
-    properties:
-      cart_id:
-        type: string
-      id:
-        type: string
-      product_id:
-        type: integer
-      product_variant_id:
-        type: integer
-      quantity:
-        type: integer
-    type: object
-  carts.cartItemResponse:
-    properties:
-      cart_id:
-        type: string
-      created_at:
-        type: string
-      id:
-        type: string
-      product_id:
-        type: integer
-      product_name:
-        type: string
-      product_price:
-        type: number
-      product_slug:
-        type: string
-      product_variant_id:
-        type: integer
-      quantity:
-        type: integer
-      updated_at:
-        type: string
-      variant_name:
-        type: string
-      variant_price_extra:
-        type: number
-    type: object
-  carts.cartResponse:
-    properties:
-      created_at:
-        type: string
-      id:
-        type: string
-      updated_at:
-        type: string
-      user_id:
-        type: string
-    type: object
-  carts.updateQuantityRequest:
-    properties:
-      quantity:
-        type: integer
-    type: object
-  categories.categoryResponse:
-    properties:
-      banner_image_url:
-        type: string
-      created_at:
-        type: string
-      description:
-        type: string
-      icon_image_url:
-        type: string
-      id:
-        type: integer
-      is_active:
-        type: boolean
-      name:
-        type: string
-      slug:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  products.createProductRequest:
-    properties:
-      base_price:
-        type: number
-      category_id:
-        type: integer
-      description:
-        type: string
-      discount_price:
-        type: number
-      name:
-        type: string
-      slug:
-        type: string
-      specifications:
-        description: Allow client to send JSON object
-      weight:
-        type: number
-    type: object
-  products.imageResponse:
-    properties:
-      id:
-        type: integer
-      image_url:
-        type: string
-      sort_order:
-        type: integer
-    type: object
-  products.productResponse:
-    properties:
-      base_price:
-        type: number
-      category_id:
-        type: integer
-      created_at:
-        type: string
-      description:
-        type: string
-      discount_price:
-        type: number
-      id:
-        type: integer
-      images:
-        items:
-          $ref: '#/definitions/products.imageResponse'
-        type: array
-      name:
-        type: string
-      rating_average:
-        type: number
-      rating_count:
-        type: integer
-      slug:
-        type: string
-      updated_at:
-        type: string
-      variants:
-        items:
-          $ref: '#/definitions/products.variantResponse'
-        type: array
-      weight:
-        type: number
-    type: object
-  products.variantResponse:
-    properties:
-      id:
-        type: integer
-      price_extra:
-        type: number
-      stock:
-        type: integer
-      stock_keeping_unit:
-        type: string
-      variant_name:
-        type: string
-    type: object
-  users.userResponse:
-    properties:
-      created_at:
-        type: string
-      email:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-      phone_number:
-        type: string
-      username:
-        type: string
+    required:
+    - password
+    - token
     type: object
 host: mantis-backend.fly.dev
 info:
@@ -226,18 +88,153 @@ info:
   title: Mantis API
   version: "1.0"
 paths:
-  /auth/login:
+  /auth/confirm-password:
     post:
       consumes:
       - application/json
-      description: Authenticate user and return a token
+      description: Verify current user password.
       parameters:
-      - description: Login Credentials
+      - description: Confirm password request
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/auth.LoginRequest'
+          $ref: '#/definitions/handler.confirmPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Confirm Password
+      tags:
+      - Auth
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Request a password reset email.
+      parameters:
+      - description: Forgot password request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.forgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Forgot Password
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return access/refresh tokens in cookies.
+      parameters:
+      - description: Login request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+      summary: Login
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      description: Clear authentication cookies.
+      responses:
+        "204":
+          description: No Content
+      summary: Logout
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      description: Refresh access token using refresh token cookie.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+      summary: Refresh Token
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account.
+      parameters:
+      - description: Register request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.registerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.User'
+        "400":
+          description: invalid request
+          schema:
+            type: string
+      summary: Register
+      tags:
+      - Auth
+  /auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset password using a valid token.
+      parameters:
+      - description: Reset password request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.resetPasswordRequest'
       produces:
       - application/json
       responses:
@@ -248,424 +245,12 @@ paths:
               type: string
             type: object
         "400":
-          description: invalid request body or validation error
+          description: invalid or expired token
           schema:
             type: string
-        "401":
-          description: unauthorized
-          schema:
-            type: string
-      summary: Login user
+      summary: Reset Password
       tags:
-      - auth
-  /auth/logout:
-    post:
-      description: Logout the current user (client-side should discard the token)
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: successfully logged out
-          schema:
-            type: string
-      summary: Logout user
-      tags:
-      - auth
-  /auth/refresh:
-    post:
-      description: Refresh the access token using a refresh token cookie
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: successfully refreshed
-          schema:
-            type: object
-            properties:
-              token:
-                type: string
-        "401":
-          description: missing or invalid refresh token
-          schema:
-            type: string
-      summary: Refresh access token
-      tags:
-      - auth
-  /auth/register:
-    post:
-      consumes:
-      - application/json
-      description: Create a new user account
-      parameters:
-      - description: Registration Info
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/auth.RegisterRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/auth.userResponse'
-        "400":
-          description: invalid request body or validation error
-          schema:
-            type: string
-      summary: Register a new user
-      tags:
-      - auth
-  /carts:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of carts belonging to the authenticated user
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/carts.cartResponse'
-            type: array
-        "401":
-          description: unauthorized
-          schema:
-            type: string
-      security:
-      - ApiKeyAuth: []
-      summary: List user's carts
-      tags:
-      - carts
-  /carts/{id}/items:
-    get:
-      consumes:
-      - application/json
-      description: Get all items within a specific cart
-      parameters:
-      - description: Cart ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/carts.cartItemResponse'
-            type: array
-      security:
-      - ApiKeyAuth: []
-      summary: List items in a cart
-      tags:
-      - carts
-    post:
-      consumes:
-      - application/json
-      description: Add a product or variant to a cart. If exists, increments quantity.
-      parameters:
-      - description: Cart ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Item Details
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/carts.addItemRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/carts.addItemResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Add item to cart
-      tags:
-      - carts
-  /carts/items/{id}:
-    delete:
-      description: Delete a specific item from the cart
-      parameters:
-      - description: Item ID
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "204":
-          description: No Content
-      security:
-      - ApiKeyAuth: []
-      summary: Remove item from cart
-      tags:
-      - carts
-    patch:
-      consumes:
-      - application/json
-      description: Update the quantity of a specific item in the cart
-      parameters:
-      - description: Item ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: New Quantity
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/carts.updateQuantityRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/carts.addItemResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Update item quantity
-      tags:
-      - carts
-  /categories:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of all categories
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/categories.categoryResponse'
-            type: array
-      summary: List all categories
-      tags:
-      - categories
-  /categories/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Get a category by its ID
-      parameters:
-      - description: Category ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/categories.categoryResponse'
-        "400":
-          description: invalid category id
-          schema:
-            type: string
-        "404":
-          description: not found
-          schema:
-            type: string
-      summary: Find category by ID
-      tags:
-      - categories
-  /products:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of all products
-      parameters:
-      - default: 20
-        description: Limit
-        in: query
-        name: limit
-        type: integer
-      - default: 0
-        description: Offset
-        in: query
-        name: offset
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/products.productResponse'
-            type: array
-      summary: List all products
-      tags:
-      - products
-    post:
-      consumes:
-      - application/json
-      description: Create a new product with the provided details
-      parameters:
-      - description: Product details
-        in: body
-        name: product
-        required: true
-        schema:
-          $ref: '#/definitions/products.createProductRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/products.productResponse'
-        "400":
-          description: invalid request payload
-          schema:
-            type: string
-        "500":
-          description: internal server error
-          schema:
-            type: string
-      summary: Create a new product
-      tags:
-      - products
-  /products/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Get a product by its ID
-      parameters:
-      - description: Product ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/products.productResponse'
-        "400":
-          description: invalid product id
-          schema:
-            type: string
-        "404":
-          description: not found
-          schema:
-            type: string
-      summary: Find product by ID
-      tags:
-      - products
-  /products/{slug}:
-    get:
-      consumes:
-      - application/json
-      description: Get a product by its slug
-      parameters:
-      - description: Product Slug
-        in: path
-        name: slug
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/products.productResponse'
-        "400":
-          description: invalid product slug
-          schema:
-            type: string
-        "404":
-          description: not found
-          schema:
-            type: string
-      summary: Find product by slug
-      tags:
-      - products
-  /users:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of all users
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/users.userResponse'
-            type: array
-      summary: List all users
-      tags:
-      - users
-  /users/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Get a user by its ID
-      parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/users.userResponse'
-        "404":
-          description: user not found
-          schema:
-            type: string
-      summary: Find user by ID
-      tags:
-      - users
-  /users/me:
-    get:
-      consumes:
-      - application/json
-      description: Get the currently authenticated user
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/users.userResponse'
-        "401":
-          description: unauthorized
-          schema:
-            type: string
-        "404":
-          description: user not found
-          schema:
-            type: string
-      security:
-      - ApiKeyAuth: []
-      summary: Get current user
-      tags:
-      - users
+      - Auth
 securityDefinitions:
   ApiKeyAuth:
     in: header

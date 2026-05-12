@@ -17,7 +17,9 @@ type Querier interface {
 	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (CreateProductRow, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
+	DeletePasswordReset(ctx context.Context, email string) error
 	FindCategoryByID(ctx context.Context, id int64) (Category, error)
+	FindPasswordResetByToken(ctx context.Context, token string) (FindPasswordResetByTokenRow, error)
 	// Untuk detail satu produk, baru kita tarik seluruh data beratnya.
 	FindProductByID(ctx context.Context, id int64) (FindProductByIDRow, error)
 	FindProductBySlug(ctx context.Context, slug string) (FindProductBySlugRow, error)
@@ -37,6 +39,8 @@ type Querier interface {
 	ListUsers(ctx context.Context) ([]ListUsersRow, error)
 	RemoveItemFromCart(ctx context.Context, id pgtype.UUID) error
 	UpdateItemQuantity(ctx context.Context, arg UpdateItemQuantityParams) (CartItem, error)
+	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
+	UpsertPasswordReset(ctx context.Context, arg UpsertPasswordResetParams) error
 }
 
 var _ Querier = (*Queries)(nil)

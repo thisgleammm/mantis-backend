@@ -147,3 +147,25 @@ ORDER BY created_at ASC;
 -- name: ClearCartItems :exec
 DELETE FROM cart_items
 WHERE cart_id IN (SELECT id FROM carts WHERE user_id = $1);
+
+-- name: UpsertPasswordReset :exec
+INSERT INTO password_resets (email, token, expires_at)
+VALUES ($1, $2, $3)
+ON CONFLICT (email) DO UPDATE SET
+    token = EXCLUDED.token,
+    expires_at = EXCLUDED.expires_at,
+    created_at = CURRENT_TIMESTAMP;
+
+-- name: FindPasswordResetByToken :one
+SELECT email, token, expires_at
+FROM password_resets
+WHERE token = $1;
+
+-- name: DeletePasswordReset :exec
+DELETE FROM password_resets
+WHERE email = $1;
+
+-- name: UpdateUserPassword :exec
+UPDATE users
+SET password = $2, updated_at = NOW()
+WHERE email = $1;

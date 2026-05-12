@@ -129,6 +129,13 @@ type OrderItem struct {
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 }
 
+type PasswordReset struct {
+	Email     string             `json:"email"`
+	Token     string             `json:"token"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type Product struct {
 	ID             int64              `json:"id"`
 	CategoryID     pgtype.Int8        `json:"category_id"`

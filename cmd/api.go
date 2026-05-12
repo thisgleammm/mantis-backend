@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/httprate"
 	"github.com/jackc/pgx/v5/pgxpool"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
+	"github.com/resend/resend-go/v3"
 	_ "github.com/thisgleammm/mantis-backend/cmd/docs"
 	repo "github.com/thisgleammm/mantis-backend/internal/adapters/postgresql/sqlc"
 	"github.com/thisgleammm/mantis-backend/internal/env"
@@ -66,7 +67,13 @@ func (app *application) mount() http.Handler {
 	userService := service.NewUserService(userRepo)
 	userHandler := handler.NewUserHandler(userService)
 
-	authService := service.NewAuthService(userRepo, jwtSecret)
+	authRepo := postgresql.NewAuthRepository(queries)
+	resendKey := env.GetString("RESEND_API_KEY", "")
+	var resendClient *resend.Client
+	if resendKey != "" {
+		resendClient = resend.NewClient(resendKey)
+	}
+	authService := service.NewAuthService(userRepo, authRepo, resendClient, jwtSecret)
 	authHandler := handler.NewAuthHandler(authService)
 
 	cartRepo := postgresql.NewCartRepository(queries)
@@ -121,6 +128,9 @@ func (app *application) mount() http.Handler {
 			r.Post("/login", authHandler.Login)
 			r.Post("/refresh", authHandler.Refresh)
 			r.Post("/logout", authHandler.Logout)
+			r.Post("/forgot-password", authHandler.ForgotPassword)
+			r.Post("/reset-password", authHandler.ResetPassword)
+			r.With(middleware.Middleware).Post("/confirm-password", authHandler.ConfirmPassword)
 		})
 
 	})

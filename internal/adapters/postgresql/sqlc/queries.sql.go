@@ -258,6 +258,16 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	return i, err
 }
 
+const deletePasswordReset = `-- name: DeletePasswordReset :exec
+DELETE FROM password_resets
+WHERE email = $1
+`
+
+func (q *Queries) DeletePasswordReset(ctx context.Context, email string) error {
+	_, err := q.db.Exec(ctx, deletePasswordReset, email)
+	return err
+}
+
 const findCategoryByID = `-- name: FindCategoryByID :one
 SELECT id, name, slug, description, icon_image_url, banner_image_url, is_active, created_at, updated_at
 FROM categories
@@ -278,6 +288,25 @@ func (q *Queries) FindCategoryByID(ctx context.Context, id int64) (Category, err
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
+	return i, err
+}
+
+const findPasswordResetByToken = `-- name: FindPasswordResetByToken :one
+SELECT email, token, expires_at
+FROM password_resets
+WHERE token = $1
+`
+
+type FindPasswordResetByTokenRow struct {
+	Email     string             `json:"email"`
+	Token     string             `json:"token"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+}
+
+func (q *Queries) FindPasswordResetByToken(ctx context.Context, token string) (FindPasswordResetByTokenRow, error) {
+	row := q.db.QueryRow(ctx, findPasswordResetByToken, token)
+	var i FindPasswordResetByTokenRow
+	err := row.Scan(&i.Email, &i.Token, &i.ExpiresAt)
 	return i, err
 }
 
@@ -845,4 +874,40 @@ func (q *Queries) UpdateItemQuantity(ctx context.Context, arg UpdateItemQuantity
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const updateUserPassword = `-- name: UpdateUserPassword :exec
+UPDATE users
+SET password = $2, updated_at = NOW()
+WHERE email = $1
+`
+
+type UpdateUserPasswordParams struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
+	_, err := q.db.Exec(ctx, updateUserPassword, arg.Email, arg.Password)
+	return err
+}
+
+const upsertPasswordReset = `-- name: UpsertPasswordReset :exec
+INSERT INTO password_resets (email, token, expires_at)
+VALUES ($1, $2, $3)
+ON CONFLICT (email) DO UPDATE SET
+    token = EXCLUDED.token,
+    expires_at = EXCLUDED.expires_at,
+    created_at = CURRENT_TIMESTAMP
+`
+
+type UpsertPasswordResetParams struct {
+	Email     string             `json:"email"`
+	Token     string             `json:"token"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+}
+
+func (q *Queries) UpsertPasswordReset(ctx context.Context, arg UpsertPasswordResetParams) error {
+	_, err := q.db.Exec(ctx, upsertPasswordReset, arg.Email, arg.Token, arg.ExpiresAt)
+	return err
 }

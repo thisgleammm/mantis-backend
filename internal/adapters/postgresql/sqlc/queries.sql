@@ -107,6 +107,7 @@ WHERE id = $1;
 SELECT 
     ci.id, ci.cart_id, ci.product_id, ci.product_variant_id, ci.quantity, ci.created_at, ci.updated_at,
     p.name as product_name, p.slug as product_slug, p.base_price as product_price,
+    COALESCE((SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.sort_order ASC LIMIT 1), '')::TEXT as product_image,
     pv.variant_name, pv.price_extra as variant_price_extra
 FROM cart_items ci
 JOIN products p ON p.id = ci.product_id

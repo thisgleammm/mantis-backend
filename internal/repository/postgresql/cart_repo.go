@@ -66,6 +66,12 @@ func (r *CartRepository) ListItems(ctx context.Context, cartID string) ([]domain
 			vID = &row.ProductVariantID.Int64
 		}
 
+		var pImage *string
+		if row.ProductImage != "" {
+			img := row.ProductImage
+			pImage = &img
+		}
+
 		items = append(items, domain.CartItem{
 			ID:                row.ID.String(),
 			CartID:            row.CartID.String(),
@@ -75,6 +81,7 @@ func (r *CartRepository) ListItems(ctx context.Context, cartID string) ([]domain
 			ProductName:       row.ProductName,
 			ProductSlug:       row.ProductSlug,
 			ProductPrice:      price.Float64,
+			ProductImage:      pImage,
 			VariantName:       vName,
 			VariantPriceExtra: vPriceExtra,
 			CreatedAt:         row.CreatedAt.Time,
@@ -86,7 +93,9 @@ func (r *CartRepository) ListItems(ctx context.Context, cartID string) ([]domain
 
 func (r *CartRepository) AddItem(ctx context.Context, item domain.CartItem) (domain.CartItem, error) {
 	var cartUUID pgtype.UUID
-	_ = cartUUID.Scan(item.CartID)
+	if err := cartUUID.Scan(item.CartID); err != nil {
+		return domain.CartItem{}, err
+	}
 
 	arg := repo.AddItemToCartParams{
 		CartID:    cartUUID,

@@ -20,7 +20,10 @@ func NewAuthService(userRepo domain.UserRepository, secret string) *AuthService 
 }
 
 func (s *AuthService) Register(ctx context.Context, u domain.User) (domain.User, error) {
-	hashed, _ := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	hashed, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return domain.User{}, err
+	}
 	u.Password = string(hashed)
 	return s.userRepo.Create(ctx, u)
 }

@@ -2,6 +2,7 @@ package postgresql
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -82,7 +83,9 @@ func (r *OrderRepository) CreateItem(ctx context.Context, item domain.OrderItem)
 
 func (r *OrderRepository) ListByUserID(ctx context.Context, userID string) ([]domain.Order, error) {
 	var userUUID pgtype.UUID
-	_ = userUUID.Scan(userID)
+	if err := userUUID.Scan(userID); err != nil {
+		return nil, fmt.Errorf("invalid user_id: %w", err)
+	}
 
 	rows, err := r.q.ListOrders(ctx, userUUID)
 	if err != nil {

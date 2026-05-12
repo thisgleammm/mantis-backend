@@ -17,7 +17,11 @@ func NewOrderHandler(svc *service.OrderService) *OrderHandler {
 }
 
 func (h *OrderHandler) Checkout(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(middleware.UserIDKey).(string)
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	var req struct {
 		ShippingAddress string `json:"shipping_address"`

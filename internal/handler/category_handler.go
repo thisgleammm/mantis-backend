@@ -28,7 +28,11 @@ func (h *CategoryHandler) ListCategories(w http.ResponseWriter, r *http.Request)
 
 func (h *CategoryHandler) FindCategoryByID(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
-	id, _ := strconv.ParseInt(idStr, 10, 64)
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "invalid category id", http.StatusBadRequest)
+		return
+	}
 	category, err := h.svc.FindCategoryByID(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)

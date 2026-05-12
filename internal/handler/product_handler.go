@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -35,7 +35,7 @@ func (h *ProductHandler) ListProducts(w http.ResponseWriter, r *http.Request) {
 
 	products, err := h.svc.ListProducts(r.Context(), int32(limit), int32(offset))
 	if err != nil {
-		log.Println(err)
+		slog.Error("ListProducts failed", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

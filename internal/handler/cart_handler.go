@@ -20,7 +20,11 @@ func NewCartHandler(svc *service.CartService) *CartHandler {
 }
 
 func (h *CartHandler) ListCarts(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(middleware.UserIDKey).(string)
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	carts, err := h.svc.ListCarts(r.Context(), userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

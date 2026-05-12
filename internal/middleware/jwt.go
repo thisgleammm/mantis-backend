@@ -40,7 +40,10 @@ func VerifyToken(tokenString string) (string, error) {
 		if claims["type"] != nil && claims["type"] != "access" {
 			return "", errors.New("invalid token type")
 		}
-		userID := claims["user_id"].(string)
+		userID, ok := claims["user_id"].(string)
+		if !ok {
+			return "", errors.New("invalid user_id in token")
+		}
 		return userID, nil
 	}
 	return "", errors.New("invalid token")

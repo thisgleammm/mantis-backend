@@ -97,8 +97,13 @@ func (r *ProductRepository) FindBySlug(ctx context.Context, slug string) (domain
 
 	var images []domain.ProductImage
 	if row.Images != nil {
+		// pgx might return it as []byte or already parsed into a slice/map
 		if b, ok := row.Images.([]byte); ok {
 			json.Unmarshal(b, &images)
+		} else {
+			// fallback: marshal back to json then unmarshal to struct
+			jb, _ := json.Marshal(row.Images)
+			json.Unmarshal(jb, &images)
 		}
 	}
 
@@ -106,6 +111,9 @@ func (r *ProductRepository) FindBySlug(ctx context.Context, slug string) (domain
 	if row.Variants != nil {
 		if b, ok := row.Variants.([]byte); ok {
 			json.Unmarshal(b, &variants)
+		} else {
+			jb, _ := json.Marshal(row.Variants)
+			json.Unmarshal(jb, &variants)
 		}
 	}
 

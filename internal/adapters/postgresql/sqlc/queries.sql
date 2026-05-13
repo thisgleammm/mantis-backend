@@ -1,12 +1,16 @@
 -- name: ListProducts :many
--- Untuk daftar produk, kita tidak menarik 'description' dan 'specifications' agar payload ringan.
 SELECT 
-    id, category_id, name, slug, base_price, discount_price, 
-    rating_average, rating_count, created_at
-FROM products
-WHERE deleted_at IS NULL
-ORDER BY created_at DESC
-LIMIT $1 OFFSET $2;
+    p.id, p.category_id, p.name, p.slug, p.base_price, p.discount_price, 
+    p.rating_average, p.rating_count, p.created_at,
+    COALESCE(img.image_url, '')::TEXT as main_image
+FROM products p
+LEFT JOIN LATERAL (
+    SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY sort_order ASC LIMIT 1
+) img ON true
+WHERE p.deleted_at IS NULL 
+  AND (p.created_at < $1 OR $1 IS NULL) -- $1 adalah waktu dari item terakhir di halaman sebelumnya
+ORDER BY p.created_at DESC
+LIMIT $2;
 
 -- name: FindProductByID :one
 -- Untuk detail satu produk, baru kita tarik seluruh data beratnya.
@@ -17,13 +21,29 @@ SELECT
 FROM products 
 WHERE id = $1 AND deleted_at IS NULL;
 
--- name: FindProductBySlug :one
+-- name: FindProductDetailBySlug :one
 SELECT 
-    id, category_id, name, slug, description, base_price, 
-    discount_price, weight, specifications, rating_average, 
-    rating_count, created_at, updated_at
-FROM products 
-WHERE slug = $1 AND deleted_at IS NULL;
+    p.id, p.category_id, p.name, p.slug, p.description, p.base_price, 
+    p.discount_price, p.weight, p.specifications, p.rating_average, 
+    p.rating_count, p.created_at,
+    COALESCE(
+        (SELECT jsonb_agg(
+            jsonb_build_object('id', pi.id, 'image_url', pi.image_url, 'sort_order', pi.sort_order)
+        ) FROM (
+            SELECT id, image_url, sort_order 
+            FROM product_images 
+            WHERE product_id = p.id 
+            ORDER BY sort_order ASC
+        ) pi), 
+    '[]'::jsonb) AS images,
+    COALESCE(
+        (SELECT jsonb_agg(
+            jsonb_build_object('id', pv.id, 'variant_name', pv.variant_name, 'price_extra', pv.price_extra, 'stock', pv.stock)
+        ) FROM product_variants pv 
+        WHERE pv.product_id = p.id AND pv.deleted_at IS NULL), 
+    '[]'::jsonb) AS variants
+FROM products p
+WHERE p.slug = $1 AND p.deleted_at IS NULL;
 
 -- name: ListUsers :many
 -- Mengecualikan 'password' untuk keamanan.
@@ -107,10 +127,17 @@ WHERE id = $1;
 SELECT 
     ci.id, ci.cart_id, ci.product_id, ci.product_variant_id, ci.quantity, ci.created_at, ci.updated_at,
     p.name as product_name, p.slug as product_slug, p.base_price as product_price,
-    COALESCE((SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.sort_order ASC LIMIT 1), '')::TEXT as product_image,
+    COALESCE(img.image_url, '')::TEXT as product_image,
     pv.variant_name, pv.price_extra as variant_price_extra
 FROM cart_items ci
 JOIN products p ON p.id = ci.product_id
+LEFT JOIN LATERAL (
+    SELECT image_url 
+    FROM product_images 
+    WHERE product_id = p.id 
+    ORDER BY sort_order ASC 
+    LIMIT 1
+) img ON true
 LEFT JOIN product_variants pv ON pv.id = ci.product_variant_id
 WHERE ci.cart_id = $1
 ORDER BY ci.created_at ASC;

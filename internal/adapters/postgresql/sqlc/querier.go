@@ -22,7 +22,7 @@ type Querier interface {
 	FindPasswordResetByToken(ctx context.Context, token string) (FindPasswordResetByTokenRow, error)
 	// Untuk detail satu produk, baru kita tarik seluruh data beratnya.
 	FindProductByID(ctx context.Context, id int64) (FindProductByIDRow, error)
-	FindProductBySlug(ctx context.Context, slug string) (FindProductBySlugRow, error)
+	FindProductDetailBySlug(ctx context.Context, slug string) (FindProductDetailBySlugRow, error)
 	FindUserByEmailForLogin(ctx context.Context, email string) (FindUserByEmailForLoginRow, error)
 	// Untuk detail user (misal untuk update profile), kita tidak menarik 'password' juga.
 	FindUserByID(ctx context.Context, id pgtype.UUID) (FindUserByIDRow, error)
@@ -33,7 +33,6 @@ type Querier interface {
 	ListOrders(ctx context.Context, userID pgtype.UUID) ([]Order, error)
 	ListProductImages(ctx context.Context, productID int64) ([]ListProductImagesRow, error)
 	ListProductVariants(ctx context.Context, productID int64) ([]ListProductVariantsRow, error)
-	// Untuk daftar produk, kita tidak menarik 'description' dan 'specifications' agar payload ringan.
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error)
 	// Mengecualikan 'password' untuk keamanan.
 	ListUsers(ctx context.Context) ([]ListUsersRow, error)

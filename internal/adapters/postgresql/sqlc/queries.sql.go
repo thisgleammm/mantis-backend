@@ -357,16 +357,32 @@ func (q *Queries) FindProductByID(ctx context.Context, id int64) (FindProductByI
 	return i, err
 }
 
-const findProductBySlug = `-- name: FindProductBySlug :one
+const findProductDetailBySlug = `-- name: FindProductDetailBySlug :one
 SELECT 
-    id, category_id, name, slug, description, base_price, 
-    discount_price, weight, specifications, rating_average, 
-    rating_count, created_at, updated_at
-FROM products 
-WHERE slug = $1 AND deleted_at IS NULL
+    p.id, p.category_id, p.name, p.slug, p.description, p.base_price, 
+    p.discount_price, p.weight, p.specifications, p.rating_average, 
+    p.rating_count, p.created_at,
+    COALESCE(
+        (SELECT jsonb_agg(
+            jsonb_build_object('id', pi.id, 'image_url', pi.image_url, 'sort_order', pi.sort_order)
+        ) FROM (
+            SELECT id, image_url, sort_order 
+            FROM product_images 
+            WHERE product_id = p.id 
+            ORDER BY sort_order ASC
+        ) pi), 
+    '[]'::jsonb) AS images,
+    COALESCE(
+        (SELECT jsonb_agg(
+            jsonb_build_object('id', pv.id, 'variant_name', pv.variant_name, 'price_extra', pv.price_extra, 'stock', pv.stock)
+        ) FROM product_variants pv 
+        WHERE pv.product_id = p.id AND pv.deleted_at IS NULL), 
+    '[]'::jsonb) AS variants
+FROM products p
+WHERE p.slug = $1 AND p.deleted_at IS NULL
 `
 
-type FindProductBySlugRow struct {
+type FindProductDetailBySlugRow struct {
 	ID             int64              `json:"id"`
 	CategoryID     pgtype.Int8        `json:"category_id"`
 	Name           string             `json:"name"`
@@ -379,12 +395,13 @@ type FindProductBySlugRow struct {
 	RatingAverage  pgtype.Numeric     `json:"rating_average"`
 	RatingCount    int32              `json:"rating_count"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	Images         interface{}        `json:"images"`
+	Variants       interface{}        `json:"variants"`
 }
 
-func (q *Queries) FindProductBySlug(ctx context.Context, slug string) (FindProductBySlugRow, error) {
-	row := q.db.QueryRow(ctx, findProductBySlug, slug)
-	var i FindProductBySlugRow
+func (q *Queries) FindProductDetailBySlug(ctx context.Context, slug string) (FindProductDetailBySlugRow, error) {
+	row := q.db.QueryRow(ctx, findProductDetailBySlug, slug)
+	var i FindProductDetailBySlugRow
 	err := row.Scan(
 		&i.ID,
 		&i.CategoryID,
@@ -398,7 +415,8 @@ func (q *Queries) FindProductBySlug(ctx context.Context, slug string) (FindProdu
 		&i.RatingAverage,
 		&i.RatingCount,
 		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.Images,
+		&i.Variants,
 	)
 	return i, err
 }
@@ -461,10 +479,17 @@ const listCartItems = `-- name: ListCartItems :many
 SELECT 
     ci.id, ci.cart_id, ci.product_id, ci.product_variant_id, ci.quantity, ci.created_at, ci.updated_at,
     p.name as product_name, p.slug as product_slug, p.base_price as product_price,
-    COALESCE((SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.sort_order ASC LIMIT 1), '')::TEXT as product_image,
+    COALESCE(img.image_url, '')::TEXT as product_image,
     pv.variant_name, pv.price_extra as variant_price_extra
 FROM cart_items ci
 JOIN products p ON p.id = ci.product_id
+LEFT JOIN LATERAL (
+    SELECT image_url 
+    FROM product_images 
+    WHERE product_id = p.id 
+    ORDER BY sort_order ASC 
+    LIMIT 1
+) img ON true
 LEFT JOIN product_variants pv ON pv.id = ci.product_variant_id
 WHERE ci.cart_id = $1
 ORDER BY ci.created_at ASC
@@ -741,17 +766,22 @@ func (q *Queries) ListProductVariants(ctx context.Context, productID int64) ([]L
 
 const listProducts = `-- name: ListProducts :many
 SELECT 
-    id, category_id, name, slug, base_price, discount_price, 
-    rating_average, rating_count, created_at
-FROM products
-WHERE deleted_at IS NULL
-ORDER BY created_at DESC
-LIMIT $1 OFFSET $2
+    p.id, p.category_id, p.name, p.slug, p.base_price, p.discount_price, 
+    p.rating_average, p.rating_count, p.created_at,
+    COALESCE(img.image_url, '')::TEXT as main_image
+FROM products p
+LEFT JOIN LATERAL (
+    SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY sort_order ASC LIMIT 1
+) img ON true
+WHERE p.deleted_at IS NULL 
+  AND (p.created_at < $1 OR $1 IS NULL) -- $1 adalah waktu dari item terakhir di halaman sebelumnya
+ORDER BY p.created_at DESC
+LIMIT $2
 `
 
 type ListProductsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	Limit     int32              `json:"limit"`
 }
 
 type ListProductsRow struct {
@@ -764,11 +794,11 @@ type ListProductsRow struct {
 	RatingAverage pgtype.Numeric     `json:"rating_average"`
 	RatingCount   int32              `json:"rating_count"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	MainImage     string             `json:"main_image"`
 }
 
-// Untuk daftar produk, kita tidak menarik 'description' dan 'specifications' agar payload ringan.
 func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error) {
-	rows, err := q.db.Query(ctx, listProducts, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listProducts, arg.CreatedAt, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -786,6 +816,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]L
 			&i.RatingAverage,
 			&i.RatingCount,
 			&i.CreatedAt,
+			&i.MainImage,
 		); err != nil {
 			return nil, err
 		}

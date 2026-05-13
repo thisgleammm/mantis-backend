@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS products (
     deleted_at TIMESTAMPTZ
 );
 
-CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id);
+CREATE INDEX idx_products_active_category ON products(category_id) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_products_slug ON products(slug);
 CREATE INDEX IF NOT EXISTS idx_products_deleted_at ON products(deleted_at);
 

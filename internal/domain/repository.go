@@ -3,7 +3,7 @@ package domain
 import "context"
 
 type ProductRepository interface {
-	List(ctx context.Context, limit, offset int32) ([]Product, error)
+	List(ctx context.Context, limit int32, cursor any) ([]Product, error)
 	FindByID(ctx context.Context, id int64) (Product, error)
 	FindBySlug(ctx context.Context, slug string) (Product, error)
 	Create(ctx context.Context, p Product) (Product, error)

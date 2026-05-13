@@ -18,10 +18,17 @@ func NewProductRepository(q *repo.Queries) *ProductRepository {
 	return &ProductRepository{q: q}
 }
 
-func (r *ProductRepository) List(ctx context.Context, limit, offset int32) ([]domain.Product, error) {
+func (r *ProductRepository) List(ctx context.Context, limit int32, cursor any) ([]domain.Product, error) {
+	var createdAt pgtype.Timestamptz
+	if cursor != nil {
+		if s, ok := cursor.(string); ok && s != "" {
+			createdAt.UnmarshalJSON([]byte(`"` + s + `"`))
+		}
+	}
+
 	rows, err := r.q.ListProducts(ctx, repo.ListProductsParams{
-		Limit:  limit,
-		Offset: offset,
+		CreatedAt: createdAt,
+		Limit:     limit,
 	})
 	if err != nil {
 		return nil, err
@@ -43,6 +50,9 @@ func (r *ProductRepository) List(ctx context.Context, limit, offset int32) ([]do
 			RatingAverage: ratingAverage.Float64,
 			RatingCount:   row.RatingCount,
 			CreatedAt:     row.CreatedAt.Time,
+			Images: []domain.ProductImage{
+				{ImageUrl: row.MainImage},
+			},
 		})
 	}
 	return products, nil
@@ -76,7 +86,7 @@ func (r *ProductRepository) FindByID(ctx context.Context, id int64) (domain.Prod
 }
 
 func (r *ProductRepository) FindBySlug(ctx context.Context, slug string) (domain.Product, error) {
-	row, err := r.q.FindProductBySlug(ctx, slug)
+	row, err := r.q.FindProductDetailBySlug(ctx, slug)
 	if err != nil {
 		return domain.Product{}, err
 	}
@@ -84,6 +94,20 @@ func (r *ProductRepository) FindBySlug(ctx context.Context, slug string) (domain
 	basePrice, _ := row.BasePrice.Float64Value()
 	discountPrice, _ := row.DiscountPrice.Float64Value()
 	ratingAverage, _ := row.RatingAverage.Float64Value()
+
+	var images []domain.ProductImage
+	if row.Images != nil {
+		if b, ok := row.Images.([]byte); ok {
+			json.Unmarshal(b, &images)
+		}
+	}
+
+	var variants []domain.ProductVariant
+	if row.Variants != nil {
+		if b, ok := row.Variants.([]byte); ok {
+			json.Unmarshal(b, &variants)
+		}
+	}
 
 	return domain.Product{
 		ID:             row.ID,
@@ -98,7 +122,8 @@ func (r *ProductRepository) FindBySlug(ctx context.Context, slug string) (domain
 		RatingAverage:  ratingAverage.Float64,
 		RatingCount:    row.RatingCount,
 		CreatedAt:      row.CreatedAt.Time,
-		UpdatedAt:      row.UpdatedAt.Time,
+		Images:         images,
+		Variants:       variants,
 	}, nil
 }
 

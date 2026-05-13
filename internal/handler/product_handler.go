@@ -30,19 +30,14 @@ func NewProductHandler(svc *service.ProductService) *ProductHandler {
 // @Router /products [get]
 func (h *ProductHandler) ListProducts(w http.ResponseWriter, r *http.Request) {
 	limitStr := r.URL.Query().Get("limit")
-	offsetStr := r.URL.Query().Get("offset")
+	cursorStr := r.URL.Query().Get("cursor")
 
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil || limit <= 0 {
 		limit = 20
 	}
 
-	offset, err := strconv.Atoi(offsetStr)
-	if err != nil || offset < 0 {
-		offset = 0
-	}
-
-	products, err := h.svc.ListProducts(r.Context(), int32(limit), int32(offset))
+	products, err := h.svc.ListProducts(r.Context(), int32(limit), cursorStr)
 	if err != nil {
 		slog.Error("ListProducts failed", "error", err)
 		json.WriteError(w, http.StatusInternalServerError, err.Error())

@@ -12,6 +12,22 @@ WHERE p.deleted_at IS NULL
 ORDER BY p.created_at DESC
 LIMIT $2;
 
+-- name: CountProducts :one
+SELECT COUNT(*) FROM products WHERE deleted_at IS NULL;
+
+-- name: ListProductsOffset :many
+SELECT 
+    p.id, p.category_id, p.name, p.slug, p.base_price, p.discount_price, 
+    p.rating_average, p.rating_count, p.created_at,
+    COALESCE(img.image_url, '')::TEXT as main_image
+FROM products p
+LEFT JOIN LATERAL (
+    SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY sort_order ASC LIMIT 1
+) img ON true
+WHERE p.deleted_at IS NULL 
+ORDER BY p.created_at DESC
+LIMIT $1 OFFSET $2;
+
 -- name: FindProductByID :one
 -- Untuk detail satu produk, baru kita tarik seluruh data beratnya.
 SELECT 

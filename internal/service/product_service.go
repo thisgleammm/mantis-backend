@@ -22,6 +22,10 @@ func (s *ProductService) ListProducts(ctx context.Context, limit int32, cursor a
 	return products, nil
 }
 
+func (s *ProductService) ListProductsOffset(ctx context.Context, limit, offset int32) (domain.PaginatedProducts, error) {
+	return s.repo.ListOffset(ctx, limit, offset)
+}
+
 func (s *ProductService) FindProductBySlug(ctx context.Context, slug string) (domain.Product, error) {
 	return s.repo.FindBySlug(ctx, slug)
 }

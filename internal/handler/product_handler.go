@@ -30,6 +30,7 @@ func NewProductHandler(svc *service.ProductService) *ProductHandler {
 // @Router /products [get]
 func (h *ProductHandler) ListProducts(w http.ResponseWriter, r *http.Request) {
 	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
 	cursorStr := r.URL.Query().Get("cursor")
 
 	limit, err := strconv.Atoi(limitStr)
@@ -37,6 +38,22 @@ func (h *ProductHandler) ListProducts(w http.ResponseWriter, r *http.Request) {
 		limit = 20
 	}
 
+	// Jika ada offset, gunakan ListProductsOffset
+	if offsetStr != "" {
+		offset, err := strconv.Atoi(offsetStr)
+		if err != nil || offset < 0 {
+			offset = 0
+		}
+		paginated, err := h.svc.ListProductsOffset(r.Context(), int32(limit), int32(offset))
+		if err != nil {
+			json.WriteError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		json.Write(w, http.StatusOK, paginated)
+		return
+	}
+
+	// Fallback ke cursor-based pagination
 	products, err := h.svc.ListProducts(r.Context(), int32(limit), cursorStr)
 	if err != nil {
 		slog.Error("ListProducts failed", "error", err)

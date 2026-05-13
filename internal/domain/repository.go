@@ -4,6 +4,7 @@ import "context"
 
 type ProductRepository interface {
 	List(ctx context.Context, limit int32, cursor any) ([]Product, error)
+	ListOffset(ctx context.Context, limit, offset int32) (PaginatedProducts, error)
 	FindByID(ctx context.Context, id int64) (Product, error)
 	FindBySlug(ctx context.Context, slug string) (Product, error)
 	Create(ctx context.Context, p Product) (Product, error)

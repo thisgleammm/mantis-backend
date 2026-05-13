@@ -58,6 +58,50 @@ func (r *ProductRepository) List(ctx context.Context, limit int32, cursor any) (
 	return products, nil
 }
 
+func (r *ProductRepository) ListOffset(ctx context.Context, limit, offset int32) (domain.PaginatedProducts, error) {
+	total, err := r.q.CountProducts(ctx)
+	if err != nil {
+		return domain.PaginatedProducts{}, err
+	}
+
+	rows, err := r.q.ListProductsOffset(ctx, repo.ListProductsOffsetParams{
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		return domain.PaginatedProducts{}, err
+	}
+
+	var products []domain.Product
+	for _, row := range rows {
+		basePrice, _ := row.BasePrice.Float64Value()
+		discountPrice, _ := row.DiscountPrice.Float64Value()
+		ratingAverage, _ := row.RatingAverage.Float64Value()
+
+		products = append(products, domain.Product{
+			ID:            row.ID,
+			CategoryID:    row.CategoryID.Int64,
+			Name:          row.Name,
+			Slug:          row.Slug,
+			BasePrice:     basePrice.Float64,
+			DiscountPrice: discountPrice.Float64,
+			RatingAverage: ratingAverage.Float64,
+			RatingCount:   row.RatingCount,
+			CreatedAt:     row.CreatedAt.Time,
+			Images: []domain.ProductImage{
+				{ImageUrl: row.MainImage},
+			},
+		})
+	}
+
+	return domain.PaginatedProducts{
+		Products: products,
+		Total:    total,
+		Limit:    limit,
+		Offset:   offset,
+	}, nil
+}
+
 func (r *ProductRepository) FindByID(ctx context.Context, id int64) (domain.Product, error) {
 	row, err := r.q.FindProductByID(ctx, id)
 	if err != nil {

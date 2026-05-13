@@ -58,6 +58,17 @@ func (q *Queries) ClearCartItems(ctx context.Context, userID pgtype.UUID) error 
 	return err
 }
 
+const countProducts = `-- name: CountProducts :one
+SELECT COUNT(*) FROM products WHERE deleted_at IS NULL
+`
+
+func (q *Queries) CountProducts(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countProducts)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createOrder = `-- name: CreateOrder :one
 INSERT INTO orders (
     user_id, invoice_number, status, total_amount,
@@ -806,6 +817,69 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]L
 	var items []ListProductsRow
 	for rows.Next() {
 		var i ListProductsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CategoryID,
+			&i.Name,
+			&i.Slug,
+			&i.BasePrice,
+			&i.DiscountPrice,
+			&i.RatingAverage,
+			&i.RatingCount,
+			&i.CreatedAt,
+			&i.MainImage,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listProductsOffset = `-- name: ListProductsOffset :many
+SELECT 
+    p.id, p.category_id, p.name, p.slug, p.base_price, p.discount_price, 
+    p.rating_average, p.rating_count, p.created_at,
+    COALESCE(img.image_url, '')::TEXT as main_image
+FROM products p
+LEFT JOIN LATERAL (
+    SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY sort_order ASC LIMIT 1
+) img ON true
+WHERE p.deleted_at IS NULL 
+ORDER BY p.created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListProductsOffsetParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type ListProductsOffsetRow struct {
+	ID            int64              `json:"id"`
+	CategoryID    pgtype.Int8        `json:"category_id"`
+	Name          string             `json:"name"`
+	Slug          string             `json:"slug"`
+	BasePrice     pgtype.Numeric     `json:"base_price"`
+	DiscountPrice pgtype.Numeric     `json:"discount_price"`
+	RatingAverage pgtype.Numeric     `json:"rating_average"`
+	RatingCount   int32              `json:"rating_count"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	MainImage     string             `json:"main_image"`
+}
+
+func (q *Queries) ListProductsOffset(ctx context.Context, arg ListProductsOffsetParams) ([]ListProductsOffsetRow, error) {
+	rows, err := q.db.Query(ctx, listProductsOffset, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListProductsOffsetRow
+	for rows.Next() {
+		var i ListProductsOffsetRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CategoryID,

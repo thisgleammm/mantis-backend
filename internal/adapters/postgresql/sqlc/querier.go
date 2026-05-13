@@ -13,6 +13,7 @@ import (
 type Querier interface {
 	AddItemToCart(ctx context.Context, arg AddItemToCartParams) (CartItem, error)
 	ClearCartItems(ctx context.Context, userID pgtype.UUID) error
+	CountProducts(ctx context.Context) (int64, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
 	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (CreateProductRow, error)
@@ -34,6 +35,7 @@ type Querier interface {
 	ListProductImages(ctx context.Context, productID int64) ([]ListProductImagesRow, error)
 	ListProductVariants(ctx context.Context, productID int64) ([]ListProductVariantsRow, error)
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error)
+	ListProductsOffset(ctx context.Context, arg ListProductsOffsetParams) ([]ListProductsOffsetRow, error)
 	// Mengecualikan 'password' untuk keamanan.
 	ListUsers(ctx context.Context) ([]ListUsersRow, error)
 	RemoveItemFromCart(ctx context.Context, id pgtype.UUID) error

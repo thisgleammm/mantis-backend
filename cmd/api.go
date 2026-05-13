@@ -84,6 +84,10 @@ func (app *application) mount() http.Handler {
 	orderService := service.NewOrderService(orderRepo, cartRepo)
 	orderHandler := handler.NewOrderHandler(orderService)
 
+	addressRepo := postgresql.NewAddressRepository(app.db)
+	addressService := service.NewAddressService(addressRepo)
+	addressHandler := handler.NewAddressHandler(addressService)
+
 	// API v1 Routing
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/products", func(r chi.Router) {
@@ -120,6 +124,14 @@ func (app *application) mount() http.Handler {
 			r.Use(middleware.Middleware)
 			r.Get("/", orderHandler.ListOrders)
 			r.Post("/checkout", orderHandler.Checkout)
+		})
+
+		r.Route("/addresses", func(r chi.Router) {
+			r.Use(middleware.Middleware)
+			r.Get("/", addressHandler.ListAddresses)
+			r.Post("/", addressHandler.CreateAddress)
+			r.Delete("/{id}", addressHandler.DeleteAddress)
+			r.Patch("/{id}/primary", addressHandler.SetPrimaryAddress)
 		})
 
 		r.Route("/auth", func(r chi.Router) {

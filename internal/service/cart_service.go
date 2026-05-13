@@ -14,7 +14,20 @@ func NewCartService(repo domain.CartRepository) *CartService {
 }
 
 func (s *CartService) ListCarts(ctx context.Context, userID string) ([]domain.Cart, error) {
-	return s.repo.ListByUserID(ctx, userID)
+	carts, err := s.repo.ListByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range carts {
+		items, err := s.repo.ListItems(ctx, carts[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		carts[i].Items = items
+	}
+
+	return carts, nil
 }
 
 func (s *CartService) ListCartItems(ctx context.Context, cartID string) ([]domain.CartItem, error) {

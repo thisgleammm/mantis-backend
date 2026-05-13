@@ -20,7 +20,8 @@ func (r *AddressRepository) ListByUserID(ctx context.Context, userID string) ([]
 	const query = `
 		SELECT id, user_id, recipient_name, phone_number, province, city,
 		       district, postal_code, full_address, COALESCE(label, ''),
-		       COALESCE(coordinates, ''), is_primary, created_at, updated_at
+		       COALESCE(coordinates, ''), is_primary, 
+		       COALESCE(created_at, NOW()), COALESCE(updated_at, NOW())
 		FROM addresses
 		WHERE user_id = $1
 		ORDER BY is_primary DESC, created_at DESC
@@ -55,7 +56,8 @@ func (r *AddressRepository) Create(ctx context.Context, address domain.Address) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULLIF($9, ''), $10)
 		RETURNING id, user_id, recipient_name, phone_number, province, city,
 		          district, postal_code, full_address, COALESCE(label, ''),
-		          COALESCE(coordinates, ''), is_primary, created_at, updated_at
+		          COALESCE(coordinates, ''), is_primary, 
+		          COALESCE(created_at, NOW()), COALESCE(updated_at, NOW())
 	`
 
 	var addr domain.Address

@@ -1,5 +1,35 @@
-basePath: /api/v1
 definitions:
+  domain.Address:
+    properties:
+      city:
+        type: string
+      coordinates:
+        type: string
+      created_at:
+        type: string
+      district:
+        type: string
+      full_address:
+        type: string
+      id:
+        type: string
+      is_primary:
+        type: boolean
+      label:
+        type: string
+      phone_number:
+        type: string
+      postal_code:
+        type: string
+      province:
+        type: string
+      recipient_name:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
   domain.Cart:
     properties:
       created_at:
@@ -263,20 +293,104 @@ definitions:
     - password
     - token
     type: object
-host: mantis-backend.fly.dev
 info:
-  contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
-  description: This is the API server for Mantis.
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: http://swagger.io/terms/
-  title: Mantis API
-  version: "1.0"
+  contact: {}
 paths:
+  /addresses:
+    get:
+      description: Get all saved addresses for the current user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Address'
+            type: array
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: List Addresses
+      tags:
+      - Addresses
+    post:
+      consumes:
+      - application/json
+      description: Save a new delivery address.
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Address'
+        "400":
+          description: bad request
+          schema:
+            type: string
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Create Address
+      tags:
+      - Addresses
+  /addresses/{id}:
+    delete:
+      description: Delete one of the current user's saved addresses.
+      parameters:
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Delete Address
+      tags:
+      - Addresses
+  /addresses/{id}/primary:
+    patch:
+      description: Mark one of the current user's addresses as primary.
+      parameters:
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Set Primary Address
+      tags:
+      - Addresses
   /auth/confirm-password:
     post:
       consumes:
@@ -772,9 +886,4 @@ paths:
       summary: Get Current User
       tags:
       - Users
-securityDefinitions:
-  ApiKeyAuth:
-    in: header
-    name: Authorization
-    type: apiKey
 swagger: "2.0"

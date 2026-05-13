@@ -13,7 +13,7 @@ import (
 type Querier interface {
 	AddItemToCart(ctx context.Context, arg AddItemToCartParams) (CartItem, error)
 	ClearCartItems(ctx context.Context, userID pgtype.UUID) error
-	CountProducts(ctx context.Context) (int64, error)
+	CountProducts(ctx context.Context, searchQuery string) (int64, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
 	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (CreateProductRow, error)

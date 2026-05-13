@@ -59,11 +59,13 @@ func (q *Queries) ClearCartItems(ctx context.Context, userID pgtype.UUID) error 
 }
 
 const countProducts = `-- name: CountProducts :one
-SELECT COUNT(*) FROM products WHERE deleted_at IS NULL
+SELECT COUNT(*) FROM products 
+WHERE deleted_at IS NULL
+  AND (name ILIKE '%' || $1::text || '%' OR $1::text = '')
 `
 
-func (q *Queries) CountProducts(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, countProducts)
+func (q *Queries) CountProducts(ctx context.Context, searchQuery string) (int64, error) {
+	row := q.db.QueryRow(ctx, countProducts, searchQuery)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -849,13 +851,15 @@ LEFT JOIN LATERAL (
     SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY sort_order ASC LIMIT 1
 ) img ON true
 WHERE p.deleted_at IS NULL 
+  AND (p.name ILIKE '%' || $3::text || '%' OR $3::text = '')
 ORDER BY p.created_at DESC
 LIMIT $1 OFFSET $2
 `
 
 type ListProductsOffsetParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit       int32  `json:"limit"`
+	Offset      int32  `json:"offset"`
+	SearchQuery string `json:"search_query"`
 }
 
 type ListProductsOffsetRow struct {
@@ -872,7 +876,7 @@ type ListProductsOffsetRow struct {
 }
 
 func (q *Queries) ListProductsOffset(ctx context.Context, arg ListProductsOffsetParams) ([]ListProductsOffsetRow, error) {
-	rows, err := q.db.Query(ctx, listProductsOffset, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listProductsOffset, arg.Limit, arg.Offset, arg.SearchQuery)
 	if err != nil {
 		return nil, err
 	}

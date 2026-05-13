@@ -26,12 +26,17 @@ func NewProductHandler(svc *service.ProductService) *ProductHandler {
 // @Produce json
 // @Param limit query int false "Limit (default 20)"
 // @Param offset query int false "Offset (default 0)"
+// @Param search query string false "Search query"
 // @Success 200 {array} domain.Product
 // @Router /products [get]
 func (h *ProductHandler) ListProducts(w http.ResponseWriter, r *http.Request) {
 	limitStr := r.URL.Query().Get("limit")
 	offsetStr := r.URL.Query().Get("offset")
 	cursorStr := r.URL.Query().Get("cursor")
+	searchStr := r.URL.Query().Get("search")
+	if searchStr == "" {
+		searchStr = r.URL.Query().Get("q")
+	}
 
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil || limit <= 0 {
@@ -39,12 +44,12 @@ func (h *ProductHandler) ListProducts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Jika ada offset, gunakan ListProductsOffset
-	if offsetStr != "" {
+	if offsetStr != "" || searchStr != "" {
 		offset, err := strconv.Atoi(offsetStr)
 		if err != nil || offset < 0 {
 			offset = 0
 		}
-		paginated, err := h.svc.ListProductsOffset(r.Context(), int32(limit), int32(offset))
+		paginated, err := h.svc.ListProductsOffset(r.Context(), int32(limit), int32(offset), searchStr)
 		if err != nil {
 			json.WriteError(w, http.StatusInternalServerError, err.Error())
 			return

@@ -13,7 +13,9 @@ ORDER BY p.created_at DESC
 LIMIT $2;
 
 -- name: CountProducts :one
-SELECT COUNT(*) FROM products WHERE deleted_at IS NULL;
+SELECT COUNT(*) FROM products 
+WHERE deleted_at IS NULL
+  AND (name ILIKE '%' || sqlc.arg('search_query')::text || '%' OR sqlc.arg('search_query')::text = '');
 
 -- name: ListProductsOffset :many
 SELECT 
@@ -25,6 +27,7 @@ LEFT JOIN LATERAL (
     SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY sort_order ASC LIMIT 1
 ) img ON true
 WHERE p.deleted_at IS NULL 
+  AND (p.name ILIKE '%' || sqlc.arg('search_query')::text || '%' OR sqlc.arg('search_query')::text = '')
 ORDER BY p.created_at DESC
 LIMIT $1 OFFSET $2;
 

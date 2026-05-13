@@ -58,15 +58,16 @@ func (r *ProductRepository) List(ctx context.Context, limit int32, cursor any) (
 	return products, nil
 }
 
-func (r *ProductRepository) ListOffset(ctx context.Context, limit, offset int32) (domain.PaginatedProducts, error) {
-	total, err := r.q.CountProducts(ctx)
+func (r *ProductRepository) ListOffset(ctx context.Context, limit, offset int32, search string) (domain.PaginatedProducts, error) {
+	total, err := r.q.CountProducts(ctx, search)
 	if err != nil {
 		return domain.PaginatedProducts{}, err
 	}
 
 	rows, err := r.q.ListProductsOffset(ctx, repo.ListProductsOffsetParams{
-		Limit:  limit,
-		Offset: offset,
+		SearchQuery: search,
+		Limit:       limit,
+		Offset:      offset,
 	})
 	if err != nil {
 		return domain.PaginatedProducts{}, err
